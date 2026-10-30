@@ -489,6 +489,87 @@ Singleton {
             "configPage": "widgets/DesktopWeatherHourlyConfig.qml"
         },
         {
+            "widgetId": "weather_monolith",
+            "name": Translation.tr("Weather Monolith"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherMonolithWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("1x1 weather card where the temperature is the card: tall condensed square-cut digits, the sky in a slanted light line and its shape in the corner."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_daylight",
+            "name": Translation.tr("Weather Daylight"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherDaylightWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("2x1 weather card with the day as an arc from sunrise to sunset and the sun (or the moon) at this minute's point on it."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_ranges",
+            "name": Translation.tr("Weather Ranges"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherRangesWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("1x2 weather card: now in an accent block, then five days as low-to-high bars on a scale shared by the week."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_ribbon",
+            "name": Translation.tr("Weather Ribbon"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherRibbonWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("2x1 weather card with the next hours drawn as a temperature ridge, hairline and heavy type in contrast above it."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_collage",
+            "name": Translation.tr("Weather Collage"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherCollageWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("1x1 weather collage of overlapping shapes: the sky with the temperature, humidity, wind pointing downwind and UV."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_pattern",
+            "name": Translation.tr("Weather Pattern"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherPatternWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("1x1 minimal weather: the sky as a halftone of dots, streaks or specks drawn by the condition, and only the temperature."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_silhouette",
+            "name": Translation.tr("Weather Silhouette"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherSilhouetteWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("1x2 minimal weather: the next two days as stacked pills as wide as they are warm, coloured by their sky."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_strip",
+            "name": Translation.tr("Weather Strip"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherStripWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("2x1 five-day forecast in columns, each day's sky shape floating at the height of its high."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
+            "widgetId": "weather_dial",
+            "name": Translation.tr("Weather Dial"),
+            "category": "Weather",
+            "qmlPath": Qt.resolvedUrl("weather/WeatherDialWidget.qml"),
+            "icon": "partly_cloudy_day",
+            "description": Translation.tr("1x1 forecast of the next 24 hours on a 24-hour face: segments coloured by the sky and as thick as they are warm."),
+            "configPage": "widgets/DesktopExpressiveWeatherConfig.qml"
+        },
+        {
             "widgetId": "date_default",
             "name": Translation.tr("Date Card"),
             "category": "Date",
@@ -894,6 +975,78 @@ Singleton {
             "configPage": "widgets/DesktopSearchPillConfig.qml"
         },
         {
+            "widgetId": "converter_2x1",
+            "name": Translation.tr("Converter (2x1)"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/ConverterWidget.qml"),
+            "icon": "swap_horiz",
+            "description": Translation.tr("2x1 unit converter: length, weight, temperature, data, area, volume, speed and time, with a connected category group, a typed value and a swap key."),
+            "configPage": "widgets/DesktopConverterWidgetConfig.qml"
+        },
+        {
+            "widgetId": "shelf_1x1",
+            "name": Translation.tr("Drop Shelf (1x1)"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/ShelfWidget1x1.qml"),
+            "icon": "shelves",
+            "description": Translation.tr("1x1 drop shelf: leave files here mid-drag, then drag the stack into any app. Shares its files with the dock's Shelf."),
+            "configPage": "widgets/DesktopShelfWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "shelf_2x1",
+            "name": Translation.tr("Drop Shelf (2x1)"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/ShelfWidget2x1.qml"),
+            "icon": "shelves",
+            "description": Translation.tr("2x1 drop shelf: the stack beside a grid of the files, each dragged out on its own. Shares its files with the dock's Shelf."),
+            "configPage": "widgets/DesktopShelfWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "shelf_1x2",
+            "name": Translation.tr("Drop Shelf (1x2)"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/ShelfWidget1x2.qml"),
+            "icon": "shelves",
+            "description": Translation.tr("1x2 drop shelf: the stack above a list of the files with their names. Shares its files with the dock's Shelf."),
+            "configPage": "widgets/DesktopShelfWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "favorites_1x1",
+            "name": Translation.tr("Favorites (1x1)"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/FavoritesGridWidget.qml"),
+            "icon": "bookmarks",
+            "description": Translation.tr("1x1 grid of four favorite sites with their icons, the dock's Favorites list. Drop a link on it to add one."),
+            "configPage": "widgets/DesktopFavoritesWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "favorites_row",
+            "name": Translation.tr("Favorites (1x0.5)"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/FavoritesRowWidget.qml"),
+            "icon": "bookmarks",
+            "description": Translation.tr("1x0.5 row of four favorite sites with their icons, the dock's Favorites list. Drop a link on it to add one."),
+            "configPage": "widgets/DesktopFavoritesWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "search_pixel",
+            "name": Translation.tr("Pixel Search Bar"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/PixelSearchBarWidget.qml"),
+            "icon": "search",
+            "description": Translation.tr("2x0.5 Pixel-style search pill with the logo, two keys inside and an accent circle beside it."),
+            "configPage": "widgets/DesktopSearchBarsConfig.qml"
+        },
+        {
+            "widgetId": "search_shortcuts",
+            "name": Translation.tr("Search with Shortcuts"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/SearchShortcutsWidget.qml"),
+            "icon": "manage_search",
+            "description": Translation.tr("2x0.5 search bar on a card with an accent key and a row of four shortcut buttons under it."),
+            "configPage": "widgets/DesktopSearchBarsConfig.qml"
+        },
+        {
             "widgetId": "quote",
             "name": Translation.tr("Quote"),
             "category": "Utility",
@@ -1117,6 +1270,105 @@ Singleton {
             "icon": "memory_alt",
             "description": Translation.tr("Nothing OS styled 1x0.5 RAM memory widget with segmented progress bar and Ndot font."),
             "configPage": ""
+        },
+        {
+            "widgetId": "wellbeing_screen_ring",
+            "name": Translation.tr("Screen Time"),
+            "category": "Wellbeing",
+            "qmlPath": Qt.resolvedUrl("wellbeing/ScreenTimeRingWidget.qml"),
+            "icon": "donut_large",
+            "description": Translation.tr("1x1 ring of today's screen time cut into the apps that took it, the total in the middle."),
+            "configPage": "widgets/DesktopWellbeingWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "wellbeing_limits",
+            "name": Translation.tr("Daily Limits"),
+            "category": "Wellbeing",
+            "qmlPath": Qt.resolvedUrl("wellbeing/ScreenTimeLimitsWidget.qml"),
+            "icon": "hourglass_top",
+            "description": Translation.tr("2x1 time left on each daily limit set in Usage, with bars that warn in the last minutes."),
+            "configPage": "widgets/DesktopWellbeingWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "wellbeing_bedtime",
+            "name": Translation.tr("Bedtime"),
+            "category": "Wellbeing",
+            "qmlPath": Qt.resolvedUrl("wellbeing/BedtimeWidget.qml"),
+            "icon": "bedtime",
+            "description": Translation.tr("2x1 tonight's bedtime with a crescent moon, and the last seven nights hanging early or late from the target line."),
+            "configPage": "widgets/DesktopWellbeingWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "wellbeing_break",
+            "name": Translation.tr("Take a Break"),
+            "category": "Wellbeing",
+            "qmlPath": Qt.resolvedUrl("wellbeing/BreakWidget.qml"),
+            "icon": "self_improvement",
+            "description": Translation.tr("1x1 minutes at the screen since your last pause, filling five cells until it is time for a break."),
+            "configPage": "widgets/DesktopWellbeingWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "wellbeing_day",
+            "name": Translation.tr("Your Day"),
+            "category": "Wellbeing",
+            "qmlPath": Qt.resolvedUrl("wellbeing/DayBalanceWidget.qml"),
+            "icon": "view_day",
+            "description": Translation.tr("1x2 day at a glance: screen time by hour, today against the week, water and tonight's bedtime."),
+            "configPage": "widgets/DesktopWellbeingWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "people_birthday",
+            "name": Translation.tr("Next Birthday"),
+            "category": "People",
+            "qmlPath": Qt.resolvedUrl("people/NextBirthdayWidget.qml"),
+            "icon": "cake",
+            "description": Translation.tr("1x1 whose birthday comes next from your phone's contacts, with their photo and the days to go."),
+            "configPage": "widgets/DesktopPeopleWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "people_birthdays",
+            "name": Translation.tr("Birthdays"),
+            "category": "People",
+            "qmlPath": Qt.resolvedUrl("people/BirthdayTimelineWidget.qml"),
+            "icon": "timeline",
+            "description": Translation.tr("2x1 the next five birthdays on a timeline, each photo as far along as its day."),
+            "configPage": "widgets/DesktopPeopleWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "people_holiday",
+            "name": Translation.tr("Next Holiday"),
+            "category": "People",
+            "qmlPath": Qt.resolvedUrl("people/HolidayWidget.qml"),
+            "icon": "celebration",
+            "description": Translation.tr("1x1 the next public holiday as a tear-off calendar page, with the days to wait."),
+            "configPage": "widgets/DesktopPeopleWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "people_countdowns",
+            "name": Translation.tr("Countdowns"),
+            "category": "People",
+            "qmlPath": Qt.resolvedUrl("people/CountdownsWidget.qml"),
+            "icon": "event_upcoming",
+            "description": Translation.tr("2x1 countdowns to your own dates, once or every year, the nearest with a dot per week left."),
+            "configPage": "widgets/DesktopPeopleWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "people_favorites",
+            "name": Translation.tr("Favorite People"),
+            "category": "People",
+            "qmlPath": Qt.resolvedUrl("people/FavoritePeopleWidget.qml"),
+            "icon": "group",
+            "description": Translation.tr("1x2 your starred contacts as faces: click to call, hover to message, through your phone."),
+            "configPage": "widgets/DesktopPeopleWidgetsConfig.qml"
+        },
+        {
+            "widgetId": "home_devices",
+            "name": Translation.tr("Home"),
+            "category": "Utility",
+            "qmlPath": Qt.resolvedUrl("utility/HomeDevicesWidget.qml"),
+            "icon": "home_iot_device",
+            "description": Translation.tr("1x2 your smart lights as tiles filled to their brightness in their own colour: click to switch, wheel to dim."),
+            "configPage": "widgets/DesktopHomeWidgetConfig.qml"
         },
     ]
 

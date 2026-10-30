@@ -4061,6 +4061,148 @@ Singleton {
                         property real y: 200
                         property bool expressiveColors: true
                     }
+                    property JsonObject weather_monolith: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_daylight: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_ranges: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_ribbon: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_collage: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_pattern: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_silhouette: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_strip: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject weather_dial: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject wellbeing_screen_ring: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject wellbeing_limits: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject wellbeing_bedtime: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject wellbeing_break: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property int breakEveryMinutes: 50
+                    }
+                    property JsonObject wellbeing_day: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject people_birthday: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject people_birthdays: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject people_holiday: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject people_countdowns: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property list<var> events: []
+                    }
+                    property JsonObject people_favorites: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
+                    property JsonObject home_devices: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                    }
                     property JsonObject weather_hourly: JsonObject {
                         property bool enable: false
                         property string placementStrategy: "free"
@@ -4487,6 +4629,79 @@ Singleton {
                         property string localsendIp: ""
                         property string localsendAlias: ""
                     }
+                    property JsonObject converter_2x1: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                        property string category: "length"
+                        property string from: "cm"
+                        property string to: "in"
+                        property real value: 1
+                    }
+                    property JsonObject shelf_1x1: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                    }
+                    property JsonObject shelf_2x1: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                    }
+                    property JsonObject shelf_1x2: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                    }
+                    property JsonObject favorites_1x1: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                        property bool showLabels: true
+                    }
+                    property JsonObject favorites_row: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                        property bool showLabels: true
+                    }
+                    property JsonObject search_pixel: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                        property string logo: "google" // google | distro | spark
+                        property string hint: ""
+                        property string action1: "lens"
+                        property string action2: "music_rec"
+                        property string action3: "ai_chat"
+                    }
+                    property JsonObject search_shortcuts: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 400
+                        property real y: 120
+                        property int widgetSize: 100
+                        property string hint: ""
+                        property string barAction: "ai_chat"
+                        property string shortcut1: "clipboard"
+                        property string shortcut2: "emojis"
+                        property string shortcut3: "files"
+                        property string shortcut4: "lens"
+                    }
                     property JsonObject session_grid: JsonObject {
                         property bool enable: false
                         property string placementStrategy: "free"
@@ -4520,6 +4735,9 @@ Singleton {
                 }
                 property list<var> activeWidgets: []
                 property bool scaleLargeWallpapers: false
+                // What a wallpaper framed as Centered (Edit Mode's wallpaper
+                // dock) leaves uncovered around the picture.
+                property string centeredBackground: "#000000"
                 property bool animateWallpaperChanges: true
                 property string wallpaperAnimation: ""
                 property bool zoomOutEnabled: true  // master toggle for zoom-out animations
@@ -4594,7 +4812,7 @@ Singleton {
                 // Per screen, written by Edit Mode's Wallpaper catalogue
                 // (services/WallpaperLayout.qml): a screen's own wallpaper and
                 // how it frames each picture it has shown.
-                //   [{ monitor, key, path, framings: [{ path, zoom, x, y, rotation, flipH, flipV }] }]
+                //   [{ monitor, key, path, framings: [{ path, zoom, x, y, rotation, flipH, flipV, centered }] }]
                 // `key` = the monitor's "model/serial" ("" when it cannot be
                 // told apart), so an entry follows the monitor across ports.
                 // `path` "" = the shared wallpaper above, which is also the
@@ -6346,6 +6564,7 @@ Singleton {
                 property bool antiBurnIn: false // periodically shift widgets to prevent OLED burn-in
                 property int cursorHideDelay: 5 // seconds of no mouse movement before the cursor hides again
                 property int lockTimeout: 10 // minutes without input on the lock screen before it turns into the Always On Display; 0 = never
+                property string clockStyle: "widgets" // "widgets" (the lock's widgets in grey) | "flip" | "dial" | "expressive" | "dots" | "analog" | "info" (AodClockFace)
             }
 
             property JsonObject osd: JsonObject {
