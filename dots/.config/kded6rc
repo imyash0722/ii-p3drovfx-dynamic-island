@@ -1,0 +1,5 @@
+[PlasmaBrowserIntegration]
+shownCount=1
+
+[Module-devicenotifications]
+autoload=false

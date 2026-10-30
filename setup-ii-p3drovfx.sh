@@ -2641,6 +2641,22 @@ install_matugen_config() {
     fi
 }
 
+# Prevents kded6 devicenotifications SIGSEGV crash under Hyprland Wayland session.
+install_kded_config() {
+    local repo_root="${1:-}"
+    for rc in kded5rc kded6rc; do
+        local src="$repo_root/dots/.config/$rc"
+        local dest="$XDG_CONFIG_HOME/$rc"
+        if [[ -n "$repo_root" && -f "$src" ]]; then
+            if [[ ! -f "$dest" ]]; then
+                cp -f "$src" "$dest" 2>/dev/null || true
+            elif ! grep -q "Module-devicenotifications" "$dest" 2>/dev/null; then
+                printf '\n[Module-devicenotifications]\nautoload=false\n' >> "$dest" 2>/dev/null || true
+            fi
+        fi
+    done
+}
+
 # apply_config <url> <branch> <fork_id> <verb>
 #
 # Prints the banner itself unless the caller already did (install does, before
@@ -2812,6 +2828,7 @@ apply_config() {
     # so a half-applied pair of configs is not a state you can end up in.
     install_hypr_config "$repo_root"
     install_matugen_config "$repo_root"
+    install_kded_config "$repo_root"
 
     if [[ -n "$CLONE_DIR" ]]; then
         rm -rf "$CLONE_DIR"
