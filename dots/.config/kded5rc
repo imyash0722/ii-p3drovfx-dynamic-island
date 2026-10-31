@@ -1,3 +1,9 @@
+[Module-appmenu]
+autoload=false
+
+[Module-audioshortcutsservice]
+autoload=false
+
 [Module-browserintegrationreminder]
 autoload=false
 
@@ -5,4 +11,13 @@ autoload=false
 autoload=false
 
 [Module-devicenotifications]
+autoload=false
+
+[Module-mprisservice]
+autoload=false
+
+[Module-networkmanagement]
+autoload=false
+
+[Module-plasma_session_shortcuts]
 autoload=false

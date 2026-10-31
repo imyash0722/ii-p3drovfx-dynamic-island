@@ -2641,7 +2641,7 @@ install_matugen_config() {
     fi
 }
 
-# Prevents kded6 devicenotifications SIGSEGV crash under Hyprland Wayland session.
+# Prevents kded6 devicenotifications SIGSEGV crash and kglobalaccel errors under Hyprland Wayland session.
 install_kded_config() {
     local repo_root="${1:-}"
     for rc in kded5rc kded6rc; do
@@ -2650,11 +2650,18 @@ install_kded_config() {
         if [[ -n "$repo_root" && -f "$src" ]]; then
             if [[ ! -f "$dest" ]]; then
                 cp -f "$src" "$dest" 2>/dev/null || true
-            elif ! grep -q "Module-devicenotifications" "$dest" 2>/dev/null; then
-                printf '\n[Module-devicenotifications]\nautoload=false\n' >> "$dest" 2>/dev/null || true
+            else
+                for mod in devicenotifications audioshortcutsservice plasma_session_shortcuts mprisservice appmenu networkmanagement; do
+                    if ! grep -q "Module-$mod" "$dest" 2>/dev/null; then
+                        printf '\n[Module-%s]\nautoload=false\n' "$mod" >> "$dest" 2>/dev/null || true
+                    fi
+                done
             fi
         fi
     done
+    if systemctl --user list-unit-files plasma-kactivitymanagerd.service &>/dev/null; then
+        systemctl --user mask plasma-kactivitymanagerd.service 2>/dev/null || true
+    fi
 }
 
 # apply_config <url> <branch> <fork_id> <verb>
