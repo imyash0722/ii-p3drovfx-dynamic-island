@@ -29,8 +29,8 @@ MouseArea {
     readonly property bool showCheck: root.chargeLimitReached || (root.isFull && root.effectivelyCharging)
 
     readonly property bool colorByPowerProfile: Config.options.bar.battery.colorByPowerProfile ?? true
-    readonly property bool isPowerSaving: root.colorByPowerProfile && (PowerProfiles.profile === PowerProfile.PowerSaver)
-    readonly property bool isPerformance: root.colorByPowerProfile && (PowerProfiles.profile === PowerProfile.Performance)
+    readonly property bool isPowerSaving: root.colorByPowerProfile && (CpuModeService.currentIndex === 0)
+    readonly property bool isPerformance: root.colorByPowerProfile && (CpuModeService.currentIndex === 2)
 
     property color colText: Appearance.colors.colOnSurface
     // One UI draws the percentage (and the charging bolt) inside the pill; "Show Percentage" only toggles it.

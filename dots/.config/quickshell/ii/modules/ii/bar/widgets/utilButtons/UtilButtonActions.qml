@@ -71,14 +71,7 @@ QtObject {
         case "darkMode":
             return Appearance.m3colors.darkmode ? "light_mode" : "dark_mode";
         case "performance":
-            switch (PowerProfiles.profile) {
-            case PowerProfile.PowerSaver:
-                return "energy_savings_leaf";
-            case PowerProfile.Performance:
-                return "local_fire_department";
-            default:
-                return "airwave";
-            }
+            return CpuModeService.icon;
         case "phoneMirror":
             return GlobalStates.phoneMirrorRunning ? "screen_share" : "smartphone";
         }
@@ -105,7 +98,7 @@ QtObject {
         case "darkMode":
             return Appearance.m3colors.darkmode;
         case "performance":
-            return PowerProfiles.profile !== PowerProfile.Balanced;
+            return CpuModeService.isCustomActive;
         case "phoneMirror":
             return GlobalStates.phoneMirrorRunning;
         }
@@ -144,23 +137,7 @@ QtObject {
             Hyprland.dispatch(`exec ${Directories.wallpaperSwitchScriptPath} --mode ${Appearance.m3colors.darkmode ? "light" : "dark"} --noswitch`);
             return;
         case "performance":
-            if (PowerProfiles.hasPerformanceProfile) {
-                switch (PowerProfiles.profile) {
-                case PowerProfile.PowerSaver:
-                    PowerProfiles.profile = PowerProfile.Balanced;
-                    break;
-                case PowerProfile.Balanced:
-                    PowerProfiles.profile = PowerProfile.Performance;
-                    break;
-                default:
-                    PowerProfiles.profile = PowerProfile.PowerSaver;
-                    break;
-                }
-            } else {
-                PowerProfiles.profile = PowerProfiles.profile === PowerProfile.Balanced
-                    ? PowerProfile.PowerSaver
-                    : PowerProfile.Balanced;
-            }
+            CpuModeService.cycle();
             return;
         case "phoneMirror":
             PhoneScrcpyService.openMirrorWindow();

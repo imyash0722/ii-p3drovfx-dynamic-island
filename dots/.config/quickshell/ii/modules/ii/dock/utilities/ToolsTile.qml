@@ -76,11 +76,9 @@ UtilityTile {
             tool.title = Appearance.m3colors.darkmode ? Translation.tr("Light mode") : Translation.tr("Dark mode");
             break;
         case "performance":
-            tool.symbol = PowerProfiles.profile === PowerProfile.PowerSaver ? "energy_savings_leaf"
-                : PowerProfiles.profile === PowerProfile.Performance ? "local_fire_department" : "airwave";
-            tool.title = PowerProfiles.profile === PowerProfile.PowerSaver ? Translation.tr("Power saver")
-                : PowerProfiles.profile === PowerProfile.Performance ? Translation.tr("Performance") : Translation.tr("Balanced");
-            tool.active = PowerProfiles.profile !== PowerProfile.Balanced;
+            tool.symbol = CpuModeService.icon;
+            tool.title = CpuModeService.statusText;
+            tool.active = CpuModeService.isCustomActive;
             break;
         case "phoneMirror":
             tool.symbol = GlobalStates.phoneMirrorRunning ? "screen_share" : "smartphone";
@@ -147,12 +145,7 @@ UtilityTile {
             Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --mode ${Appearance.m3colors.darkmode ? "light" : "dark"} --noswitch`]);
             break;
         case "performance":
-            if (PowerProfiles.hasPerformanceProfile) {
-                PowerProfiles.profile = PowerProfiles.profile === PowerProfile.PowerSaver ? PowerProfile.Balanced
-                    : PowerProfiles.profile === PowerProfile.Balanced ? PowerProfile.Performance : PowerProfile.PowerSaver;
-            } else {
-                PowerProfiles.profile = PowerProfiles.profile === PowerProfile.Balanced ? PowerProfile.PowerSaver : PowerProfile.Balanced;
-            }
+            CpuModeService.cycle();
             break;
         case "phoneMirror":
             PhoneScrcpyService.openMirrorWindow();

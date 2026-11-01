@@ -48,8 +48,8 @@ MouseArea {
     readonly property bool oneuiShowPercentage: (Config.options.bar.battery.showPercentage ?? "off") !== "off"
 
     readonly property bool colorByPowerProfile: Config.options.bar.battery.colorByPowerProfile ?? true
-    readonly property bool isPowerSaving: root.colorByPowerProfile && (PowerProfiles.profile === PowerProfile.PowerSaver)
-    readonly property bool isPerformance: root.colorByPowerProfile && (PowerProfiles.profile === PowerProfile.Performance)
+    readonly property bool isPowerSaving: root.colorByPowerProfile && (CpuModeService.currentIndex === 0)
+    readonly property bool isPerformance: root.colorByPowerProfile && (CpuModeService.currentIndex === 2)
 
     readonly property color fillColor: {
         if (root.isCritical && !root.isCharging)

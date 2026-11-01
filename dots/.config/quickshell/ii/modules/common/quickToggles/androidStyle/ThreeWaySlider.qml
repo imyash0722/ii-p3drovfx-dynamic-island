@@ -53,11 +53,7 @@ Item {
             if (mode === "transparency" || mode === "adaptive") return 2;
             return 1;
         } else if (toggleType === "powerProfile") {
-            let prof = PowerProfiles.profile;
-            if (prof === PowerProfile.PowerSaver) return 0;
-            if (prof === PowerProfile.Balanced) return 1;
-            if (prof === PowerProfile.Performance) return 2;
-            return 1;
+            return CpuModeService.currentIndex;
         } else if (toggleType === "keyboardBacklight") {
             let val = KeyboardBacklight.currentValue;
             let max = KeyboardBacklight.maxValue;
@@ -118,9 +114,7 @@ Item {
             else if (idx === 2) targetMode = "transparency";
             EarbudsControlService.setNoiseMode(activeDev, targetMode);
         } else if (toggleType === "powerProfile") {
-            if (idx === 0) PowerProfiles.profile = PowerProfile.PowerSaver;
-            else if (idx === 1) PowerProfiles.profile = PowerProfile.Balanced;
-            else if (idx === 2) PowerProfiles.profile = PowerProfile.Performance;
+            CpuModeService.setIndex(idx);
         } else if (toggleType === "keyboardBacklight") {
             let max = KeyboardBacklight.maxValue;
             if (idx === 0) KeyboardBacklight.setValue(0);

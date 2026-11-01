@@ -443,16 +443,7 @@ Item {
     // Three profiles, one scale. `balanced` is the resting value, so it doubles
     // as "the user turned the special profile off" — which is why the bar hides
     // the icon there rather than showing a needle parked in the middle.
-    readonly property string powerProfileName: {
-        switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver:
-            return "saver";
-        case PowerProfile.Performance:
-            return "performance";
-        default:
-            return "balanced";
-        }
-    }
+    readonly property string powerProfileName: CpuModeService.profileName
     readonly property bool powerProfileActive: root.powerProfileName !== "balanced"
     onPowerProfileNameChanged: {
         if (root.driverReady && root.powerProfileIcon)

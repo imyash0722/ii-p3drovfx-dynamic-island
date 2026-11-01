@@ -14,8 +14,8 @@ Item {
     readonly property bool isCharging: Battery.isCharging
     readonly property bool isFull: Battery.isFullyCharged || Battery.chargeLimitReached
     readonly property bool isPluggedIn: Battery.isPluggedIn
-    readonly property bool isPowerSaving: PowerProfiles.profile === PowerProfile.PowerSaver
-    readonly property bool isPerformance: PowerProfiles.profile === PowerProfile.Performance
+    readonly property bool isPowerSaving: CpuModeService.currentIndex === 0
+    readonly property bool isPerformance: CpuModeService.currentIndex === 2
 
 
     readonly property string statusText: {

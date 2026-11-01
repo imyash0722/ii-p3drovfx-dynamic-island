@@ -313,20 +313,8 @@ Rectangle {
         return d.toGateway ? Translation.tr("Gateway · %1").arg(d.target) : d.target;
     }
 
-    readonly property string powerProfileName: {
-        switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver: return Translation.tr("Power saver");
-        case PowerProfile.Performance: return Translation.tr("Performance");
-        default: return Translation.tr("Balanced");
-        }
-    }
-    readonly property string powerProfileIcon: {
-        switch (PowerProfiles.profile) {
-        case PowerProfile.PowerSaver: return "energy_savings_leaf";
-        case PowerProfile.Performance: return "local_fire_department";
-        default: return "airwave";
-        }
-    }
+    readonly property string powerProfileName: CpuModeService.statusText
+    readonly property string powerProfileIcon: CpuModeService.icon
     readonly property bool gameModeOn: (root.preview && !root.sampler.fpsActive) || (root.sampler.gamemode ?? 0) > 0
 
     readonly property var gameWindow: GameDetector.focusedWindow
