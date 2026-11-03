@@ -14,3 +14,4 @@ modules/settings/configs/sections/BarPlacementSection.qml
 modules/settings/configs/sections/DynamicIslandModeSection.qml
 modules/common/widgets/NotificationAppIcon.qml
 services/ShellUpdates.qml
+services/CpuModeService.qml
