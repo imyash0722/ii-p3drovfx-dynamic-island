@@ -710,12 +710,11 @@ FloatingWindow {
             });
         }
         MaterialThemeLoader.reapplyTheme();
-        // Re-apply ignore alpha rule: Settings is lazy-loaded, so the rule fired
-        // in Appearance.onIgnoreAlphaChanged before this window existed. Re-send
-        // now that the xdg-toplevel is mapped and Hyprland can match it.
-        var a = Appearance.ignoreAlpha;
+        // Re-apply window rule: Settings is lazy-loaded, so the rule fired
+        // in Appearance before this window existed. Re-send now that the
+        // xdg-toplevel is mapped and Hyprland can match it.
         Quickshell.execDetached(["hyprctl", "eval",
-            "hl.window_rule({ match = { title = '^(illogical-impulse Settings)$' }, no_blur = false, ignorealpha = " + a + " })"]);
+            "hl.window_rule({ name = 'ii:appearance:settings', match = { title = '^(illogical-impulse Settings)$' }, no_blur = false })"]);
     }
 
     Component.onDestruction: {
