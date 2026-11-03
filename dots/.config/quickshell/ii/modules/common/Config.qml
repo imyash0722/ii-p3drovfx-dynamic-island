@@ -1977,6 +1977,7 @@ Singleton {
             "policies.translator": [0, 1, 2],
             "policies.player": [0, 1],
             "policies.phone": [0, 1],
+            "policies.anki": [0, 1],
             "phone.webcam.cameraFacing": ["front", "back"],
             "phone.webcam.resolution": ["640x480", "1280x720", "1920x1080"],
             "phone.webcam.rotateDegrees": [0, 90, 180, 270],
@@ -2720,6 +2721,7 @@ Singleton {
                 property int translator: 1 // 0: No | 1: Default (illogical-impulse) | 2: Expressive (reworked)
                 property int player: 0 // 0: No | 1: Yes
                 property int phone: 1 // 0: No | 1: Yes — Phone tab (future KDE Connect + scrcpy external)
+                property int anki: 0 // 0: No | 1: Yes — Anki tab (scripts/anki, installs its engine on first use)
             }
 
             property JsonObject phone: JsonObject {
@@ -5396,6 +5398,8 @@ Singleton {
                     property bool disableWifi: false
                     property bool disableBluetooth: false
                     property bool disableMedia: false
+                    // Media bubble stays open as a wide pill with the lyric / track name.
+                    property bool pinMediaBubble: false
                     property bool disableNotification: false
                     property bool disableOsd: false
                     property bool disableRecording: false
@@ -6659,6 +6663,13 @@ Singleton {
                      * people develop on.
                      */
                     property bool allowMouse: false
+                    /**
+                     * Whether mouse clicks can raise the keyboard while in desktop mode.
+                     *
+                     * Off by default so that mouse clicks on text fields in desktop mode
+                     * never raise the keyboard even if allowMouse is enabled.
+                     */
+                    property bool allowMouseInDesktop: false
                     // How long after a touch a text field may claim focus and still count as touch-driven.
                     property int touchWindowMs: 1200
                     property bool hideOnPhysicalKey: true
