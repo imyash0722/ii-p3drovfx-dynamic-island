@@ -15,6 +15,7 @@ import qs.modules.ii.background.widgets.utility
 import qs.modules.ii.background.widgets.weather
 import qs.modules.ii.background.widgets.wellbeing
 import qs.modules.ii.background.widgets.people
+import qs.modules.ii.background.widgets.visualizer
 import qs
 import qs.services
 
@@ -132,6 +133,12 @@ Item {
         "media_android": component_media_android,
         "media_cd": component_media_cd,
         "nothing_ring_media": component_nothing_ring_media,
+        "visualizer": component_visualizer,
+        "visualizer_ring": component_visualizer_ring,
+        "visualizer_aurora": component_visualizer_aurora,
+        "visualizer_mirror": component_visualizer_mirror,
+        "visualizer_dots": component_visualizer_dots,
+        "visualizer_bars": component_visualizer_bars,
         "compact_media": component_compact_media,
         "media_poster": component_media_poster,
         "media_deck": component_media_deck,
@@ -849,6 +856,84 @@ Item {
             scaledScreenHeight: delegateRoot.screenHeight
             wallpaperScale: delegateRoot.wallpaperScale
             wallpaperSafetyTriggered: delegateRoot.wallpaperSafetyTriggered
+        }
+
+    }
+
+    Component {
+        id: component_visualizer
+
+        VisualizerWidget {
+            screenWidth: delegateRoot.screenWidth
+            screenHeight: delegateRoot.screenHeight
+            scaledScreenWidth: delegateRoot.screenWidth
+            scaledScreenHeight: delegateRoot.screenHeight
+            wallpaperScale: delegateRoot.wallpaperScale
+        }
+
+    }
+
+    Component {
+        id: component_visualizer_ring
+
+        VisualizerWidget {
+            screenWidth: delegateRoot.screenWidth
+            screenHeight: delegateRoot.screenHeight
+            scaledScreenWidth: delegateRoot.screenWidth
+            scaledScreenHeight: delegateRoot.screenHeight
+            wallpaperScale: delegateRoot.wallpaperScale
+        }
+
+    }
+
+    Component {
+        id: component_visualizer_aurora
+
+        VisualizerWidget {
+            screenWidth: delegateRoot.screenWidth
+            screenHeight: delegateRoot.screenHeight
+            scaledScreenWidth: delegateRoot.screenWidth
+            scaledScreenHeight: delegateRoot.screenHeight
+            wallpaperScale: delegateRoot.wallpaperScale
+        }
+
+    }
+
+    Component {
+        id: component_visualizer_mirror
+
+        VisualizerWidget {
+            screenWidth: delegateRoot.screenWidth
+            screenHeight: delegateRoot.screenHeight
+            scaledScreenWidth: delegateRoot.screenWidth
+            scaledScreenHeight: delegateRoot.screenHeight
+            wallpaperScale: delegateRoot.wallpaperScale
+        }
+
+    }
+
+    Component {
+        id: component_visualizer_dots
+
+        VisualizerWidget {
+            screenWidth: delegateRoot.screenWidth
+            screenHeight: delegateRoot.screenHeight
+            scaledScreenWidth: delegateRoot.screenWidth
+            scaledScreenHeight: delegateRoot.screenHeight
+            wallpaperScale: delegateRoot.wallpaperScale
+        }
+
+    }
+
+    Component {
+        id: component_visualizer_bars
+
+        VisualizerWidget {
+            screenWidth: delegateRoot.screenWidth
+            screenHeight: delegateRoot.screenHeight
+            scaledScreenWidth: delegateRoot.screenWidth
+            scaledScreenHeight: delegateRoot.screenHeight
+            wallpaperScale: delegateRoot.wallpaperScale
         }
 
     }

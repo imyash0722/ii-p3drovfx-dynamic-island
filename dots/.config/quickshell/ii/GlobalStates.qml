@@ -48,6 +48,7 @@ Singleton {
     // Immersive Media Mode's player options sheet; a global flag so IPC can open it for testing.
     property bool mediaModeImmersiveOptionsOpen: false
     property int widgetReStackTrigger: 0
+    readonly property list<real> visualizerPoints: CavaService.visualizerPoints
 
     function requestMediaMode(action = "toggle") {
         if (action !== "toggle" && action !== "open" && action !== "close")

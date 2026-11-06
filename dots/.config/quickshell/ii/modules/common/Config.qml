@@ -880,22 +880,29 @@ Singleton {
         let startY = defaultY !== undefined ? defaultY : 200;
 
         if (defaultX === undefined && defaultY === undefined) {
-            let offset = 0;
-            while (true) {
-                let collision = false;
-                for (let i = 0; i < cloned.length; i++) {
-                    const placed = WidgetPlacement.resolve(cloned[i], monitorName);
-                    if (Math.abs(placed.x - (startX + offset)) < 30 && Math.abs(placed.y - (startY + offset)) < 30) {
-                        collision = true;
+            const isBandVisualizer = ["visualizer_aurora", "visualizer_mirror", "visualizer_dots", "visualizer_bars"].includes(widgetId)
+                || (widgetId === "visualizer" && (root.options.background?.widgets?.visualizer?.style ?? "bars") !== "ring");
+            if (isBandVisualizer) {
+                startX = 0;
+                startY = 1080 - (root.options.background?.widgets?.[widgetId]?.height ?? 260);
+            } else {
+                let offset = 0;
+                while (true) {
+                    let collision = false;
+                    for (let i = 0; i < cloned.length; i++) {
+                        const placed = WidgetPlacement.resolve(cloned[i], monitorName);
+                        if (Math.abs(placed.x - (startX + offset)) < 30 && Math.abs(placed.y - (startY + offset)) < 30) {
+                            collision = true;
+                            break;
+                        }
+                    }
+                    if (!collision) {
+                        startX += offset;
+                        startY += offset;
                         break;
                     }
+                    offset += 80;
                 }
-                if (!collision) {
-                    startX += offset;
-                    startY += offset;
-                    break;
-                }
-                offset += 80;
             }
         }
 
@@ -4545,6 +4552,78 @@ Singleton {
                         property bool enableShadows: false
                         property bool enableInnerShadow: false
                         property int widgetSize: 100
+                    }
+                    property JsonObject visualizer: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 0
+                        property real y: 0
+                        property real z: -1000
+                        property string style: "bars"
+                        property string colorSource: "theme"
+                        property real sensitivity: 1
+                        property int height: 260
+                        property int ringSize: 380
+                    }
+                    property JsonObject visualizer_ring: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property real z: -1000
+                        property string style: "ring"
+                        property string colorSource: "theme"
+                        property real sensitivity: 1
+                        property int height: 260
+                        property int ringSize: 380
+                    }
+                    property JsonObject visualizer_aurora: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 0
+                        property real y: 0
+                        property real z: -1000
+                        property string style: "aurora"
+                        property string colorSource: "theme"
+                        property real sensitivity: 1
+                        property int height: 260
+                        property int ringSize: 380
+                    }
+                    property JsonObject visualizer_mirror: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 0
+                        property real y: 0
+                        property real z: -1000
+                        property string style: "mirror"
+                        property string colorSource: "theme"
+                        property real sensitivity: 1
+                        property int height: 260
+                        property int ringSize: 380
+                    }
+                    property JsonObject visualizer_dots: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 0
+                        property real y: 0
+                        property real z: -1000
+                        property string style: "dots"
+                        property string colorSource: "theme"
+                        property real sensitivity: 1
+                        property int height: 260
+                        property int ringSize: 380
+                    }
+                    property JsonObject visualizer_bars: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 0
+                        property real y: 0
+                        property real z: -1000
+                        property string style: "bars"
+                        property string colorSource: "theme"
+                        property real sensitivity: 1
+                        property int height: 260
+                        property int ringSize: 380
                     }
                     property JsonObject todo_focus: JsonObject {
                         property bool enable: false
