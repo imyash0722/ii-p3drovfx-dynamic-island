@@ -38,6 +38,7 @@ Item {
     required property real movableYSpace
     required property real minSafeScale
     required property bool wallpaperSizeFresh
+    property int probedRevision: 0
     // `wallpaperIsVideo` means a video painted by another process (mpvpaper);
     // a video the shell plays itself arrives here instead, with the poster
     // frame as `wallpaperPath`, and keeps every image effect.
@@ -126,7 +127,16 @@ Item {
     // settling on a preset switch. Snap the re-centring while a switch settles;
     // ordinary parallax (workspace / cursor) keeps its animation.
     property bool wallpaperSettling: false
-    onWallpaperPathChanged: {
+    // The file rewritten in place (Edit Mode's quarter turns are written into
+    // it): the same path, a new picture - handled as a change of wallpaper.
+    readonly property int wallpaperRevision: WallpaperLayout.revisionOf(wallpaperPath)
+    onWallpaperRevisionChanged: _beginWallpaperChange()
+    onWallpaperPathChanged: _beginWallpaperChange()
+    function _beginWallpaperChange() {
+        // The plane is about to take the new file's proportions (as soon as its
+        // size probe answers), well before the new picture decodes: hold the
+        // picture on screen where it is until the transition replaces it.
+        wallpaper.pinOutgoing();
         wallpaperImageRoot.wallpaperSettling = true;
         wallpaperImageRoot.backingBlurFrozen = false;
         wallpaperSettleTimer.restart();
@@ -146,7 +156,8 @@ Item {
     // crossfade), but "" only lands if it persists, so a one-frame transient
     // never reaches the crossfade. A genuine work-safety clear still blanks
     // after the short delay.
-    readonly property string rawWallpaperSource: wallpaperSafetyTriggered ? "" : wallpaperPath
+    // `?r=N` once the file has been rewritten: a new decode, not the cached one.
+    readonly property string rawWallpaperSource: wallpaperSafetyTriggered ? "" : WallpaperLayout.revisionSource(wallpaperPath)
     // Never a live binding to rawWallpaperSource: only _syncWallpaperSource writes
     // it, so a transient "" cannot slip through before the handler debounces it.
     property string stableWallpaperSource: ""
@@ -259,16 +270,32 @@ Item {
     function _commitCommittedSource() {
         if (!decodeGeometryFresh)
             return;
+        // A file rewritten in place: its new dimensions are not known until
+        // the probe has answered for this revision. Read through the function,
+        // not wallpaperRevision - in the cascade of a revision bump this can run
+        // before that binding has been re-evaluated.
+        if (WallpaperLayout.revisionOf(wallpaperPath) !== probedRevision)
+            return;
         // The framing goes with the picture: set first, so the new picture's
         // first frame is already laid out its own way.
         committedFramingKey = framingKey;
         if (committedWallpaperSource === stableWallpaperSource)
             return;
         framingRedecodePending = false;
+        // The same file rewritten (a quarter turn written into it) looks
+        // exactly like the turned picture on screen: swap without a transition.
+        wallpaper.quietChange = committedWallpaperSource !== ""
+            && _bareSource(committedWallpaperSource) === _bareSource(stableWallpaperSource);
         committedWallpaperSource = stableWallpaperSource;
     }
     onStableWallpaperSourceChanged: _commitCommittedSource()
     onDecodeGeometryFreshChanged: _commitCommittedSource()
+    onProbedRevisionChanged: _commitCommittedSource()
+    function _bareSource(source) {
+        const s = WallpaperLayout.cleanPath(source);
+        const q = s.indexOf("?r=");
+        return q >= 0 ? s.substring(0, q) : s;
+    }
     // Deferred: the key and the path change on the same config write, in an
     // order nobody promises, and the path's change is what marks the geometry
     // stale. A beat later the gate above knows whether a new picture is coming.
@@ -438,7 +465,7 @@ Item {
 
     // Keep the legacy opening scale available for Gnome-like while the modern
     // presets remain driven exclusively by OverviewBackgroundController.
-    readonly property bool isScrollingLayout: Persistent.states.hyprland.layout === "scrolling"
+    readonly property bool isScrollingLayout: GlobalStates.scrollingLayoutActive
     readonly property bool zoomInStyle: !videoEffectsDisabled && Config.options.overview.scrollingStyle.zoomStyle === "in"
     readonly property bool showOpeningAnimation: Config.options.overview.showOpeningAnimation && Config.options.overview.animationStyle !== "none"
     readonly property var zoomLevels: ({
@@ -584,7 +611,11 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 color: wallpaperImageRoot.overviewController.isGnomeLike ? "#000000" : Appearance.colors.colLayer0
-                opacity: wallpaperImageRoot.overviewController.isGnomeLike ? 0.24 : wallpaperImageRoot.overviewController.dimAmount
+                // The scrolling overview copies the scrolloverview plugin, whose cards
+                // sit on a dark field: the backing sinks much further there.
+                opacity: wallpaperImageRoot.overviewController.isGnomeLike
+                    ? (wallpaperImageRoot.isScrollingLayout ? 0.62 : 0.24)
+                    : wallpaperImageRoot.overviewController.dimAmount
             }
         }
     }
@@ -607,6 +638,41 @@ Item {
             && !wallpaperImageRoot.overviewController.useBackingBlur
             && wallpaperImageRoot.overviewAnimationVisible
         opacity: wallpaperImageRoot.overviewController.dimAmount
+    }
+
+    // The overview-style lock animation (Gnome Like / Material Shape) puts the
+    // lock's look on the backing wallpaper; the zooming plane stays clean.
+    LockBlur {
+        id: backingLockBlur
+        anchors.fill: overviewBackingImage
+        suppressed: !wallpaperImageRoot.overviewController.lockDriven
+        sourceItem: overviewBackingImage
+        sourceReady: wallpaperImageRoot.wallpaperSourceReady && overviewBackingImage.status === Image.Ready
+        baseScale: wallpaperImageRoot.baseWallpaperScale
+        lockAnimationActive: wallpaperImageRoot.lockAnimationActive
+        wallpaperIsVideo: wallpaperImageRoot.wallpaperIsVideo || Config.options.background.useWallpaperEngine
+    }
+    LockDesaturate {
+        anchors.fill: overviewBackingImage
+        suppressed: !wallpaperImageRoot.overviewController.lockDriven
+        sourceItem: Config.options.lock.blur.enable ? backingLockBlur : overviewBackingImage
+        sourceReady: wallpaperImageRoot.wallpaperSourceReady && overviewBackingImage.status === Image.Ready
+        baseScale: wallpaperImageRoot.baseWallpaperScale
+        lockAnimationActive: wallpaperImageRoot.lockAnimationActive
+    }
+    LockColorWash {
+        anchors.fill: overviewBackingImage
+        suppressed: !wallpaperImageRoot.overviewController.lockDriven
+        sourceItem: overviewBackingImage
+        baseScale: wallpaperImageRoot.baseWallpaperScale
+        lockAnimationActive: wallpaperImageRoot.lockAnimationActive
+    }
+    LockVignette {
+        anchors.fill: overviewBackingImage
+        suppressed: !wallpaperImageRoot.overviewController.lockDriven
+        sourceItem: overviewBackingImage
+        baseScale: wallpaperImageRoot.baseWallpaperScale
+        lockAnimationActive: wallpaperImageRoot.lockAnimationActive
     }
 
     // Real Gnome: GNOME Shell's radial shade over the blurred backing - the
@@ -878,6 +944,7 @@ Item {
 
                 transform: [
                     Scale {
+                        id: contentScaleTransform
                         origin.x: wallpaperContent.width / 2
                         origin.y: wallpaperContent.height / 2
                         xScale: wallpaperContent.contentScale
@@ -963,6 +1030,7 @@ Item {
                         // screen's axis whatever the orientation.
                         rotation: wallpaperImageRoot.framed ? framedContent.frame.angle : 0
                         transform: Scale {
+                            id: framedScaleTransform
                             origin.x: framedContent.width / 2
                             origin.y: framedContent.height / 2
                             xScale: wallpaperImageRoot.framed ? framedContent.frame.scaleX : 1
@@ -986,6 +1054,20 @@ Item {
                             sourceSize: wallpaperImageRoot.stableDecodeSize
 
                             imageSource: wallpaperImageRoot.committedWallpaperSource
+                            pinReference: wallpaperPlanes
+                            // Every value between the planes and this image that moves it.
+                            pinDependencies: [
+                                wallpaperContent.x, wallpaperContent.y,
+                                wallpaperContent.width, wallpaperContent.height,
+                                contentScaleTransform.origin.x, contentScaleTransform.origin.y,
+                                contentScaleTransform.xScale, contentScaleTransform.yScale,
+                                parallaxTranslate.x, parallaxTranslate.y,
+                                wallpaperVisualContainer.width, wallpaperVisualContainer.height,
+                                framedContent.x, framedContent.y,
+                                framedContent.width, framedContent.height, framedContent.rotation,
+                                framedScaleTransform.origin.x, framedScaleTransform.origin.y,
+                                framedScaleTransform.xScale, framedScaleTransform.yScale
+                            ]
                             animated: Config.options.background.animateWallpaperChanges
                             transitionShader: Config.options.background.wallpaperAnimation
                             shadersPath: Qt.resolvedUrl("../shaders")
@@ -1150,6 +1232,7 @@ Item {
                 LockBlur {
                     id: lockBlur
                     anchors.fill: parent
+                    suppressed: wallpaperImageRoot.overviewController.lockDriven
                     sourceItem: wallpaperVisualContainer
                     sourceReady: wallpaperImageRoot.wallpaperSourceReady
                     baseScale: wallpaperImageRoot.baseWallpaperScale
@@ -1159,6 +1242,7 @@ Item {
 
                 LockDesaturate {
                     anchors.fill: parent
+                    suppressed: wallpaperImageRoot.overviewController.lockDriven
                     sourceItem: Config.options.lock.blur.enable ? lockBlur : wallpaperVisualContainer
                     sourceReady: wallpaperImageRoot.wallpaperSourceReady
                     baseScale: wallpaperImageRoot.baseWallpaperScale
@@ -1167,6 +1251,7 @@ Item {
 
                 LockColorWash {
                     anchors.fill: parent
+                    suppressed: wallpaperImageRoot.overviewController.lockDriven
                     sourceItem: wallpaperVisualContainer
                     baseScale: wallpaperImageRoot.baseWallpaperScale
                     lockAnimationActive: wallpaperImageRoot.lockAnimationActive
@@ -1174,6 +1259,7 @@ Item {
 
                 LockVignette {
                     anchors.fill: parent
+                    suppressed: wallpaperImageRoot.overviewController.lockDriven
                     sourceItem: wallpaperVisualContainer
                     baseScale: wallpaperImageRoot.baseWallpaperScale
                     lockAnimationActive: wallpaperImageRoot.lockAnimationActive

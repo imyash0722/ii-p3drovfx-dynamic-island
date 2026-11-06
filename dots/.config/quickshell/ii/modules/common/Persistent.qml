@@ -478,6 +478,11 @@ Singleton {
                 property string devToolsCategory: "all"
             }
 
+            property JsonObject passwordManager: JsonObject {
+                // Item ids only, most recent first — never names or secrets.
+                property list<string> recent: []
+            }
+
             property JsonObject clipboard: JsonObject {
                 property list<string> pinnedEntries: []
                 // cliphist exposes stable IDs but no timestamps. These compact
@@ -606,6 +611,9 @@ Singleton {
                 // Action sequences paused on a wait or a delay, resumed by the
                 // engine when due: [{kind, id, index, dueAt, resumed, source, failed}]
                 property list<var> pendingSteps: []
+                // Tracked shell commands, newest first (ModeTasks):
+                // [{runId, owner, kind, label, command, dir, startedAt, endedAt, state, exitCode, lost, report}]
+                property list<var> taskRuns: []
             }
 
             property JsonObject overlay: JsonObject {

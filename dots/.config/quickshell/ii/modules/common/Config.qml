@@ -3265,6 +3265,10 @@ Singleton {
                 // Sample intervals between full /proc sweeps for new GPU clients.
                 // Only a backstop; a new window forces one immediately.
                 property int gpuFullEvery: 30
+                // Per-app TCP data from the kernel's socket counters, no privilege
+                // needed. UDP (QUIC) and connections shorter than one sample are not
+                // matched to an app and land in the device's unattributed row.
+                property bool trackNetwork: true
                 // Seconds without input before foreground time stops accruing.
                 // 0 turns the idle monitor off, and time keeps running.
                 property int idleTimeoutSec: 300
@@ -4880,6 +4884,9 @@ Singleton {
                 // Semantic style name. Empty keeps the legacy numeric setting
                 // active until the user chooses a new preset in Settings.
                 property string overviewBackgroundStyle: ""
+                // Real Gnome: also zoom the wallpaper (and offer a window picker) on
+                // the monitors the overview did not open on. Off = only the focused one.
+                property bool realGnomeAllMonitors: false
                 property bool materialShapeShadow: false
                 property real materialShapeScale: 1.0
                 property bool cheatsheetZoomOut: true
@@ -5366,6 +5373,7 @@ Singleton {
                     property string portWatcher: "expressive"
                     property string networkSpeed: "default" // default | expressive
                     property string aiPlanUsage: "expressive"
+                    property string passwordManager: "expressive" // default | expressive
                     property string search: "default" // default | expressive | neural | sculpt
                     property string date: "default"
                     property string timer: "expressive" // default | expressive | sculpt
@@ -5609,6 +5617,19 @@ Singleton {
                     property bool showUnit: true
                     property bool compact: false
                     property bool hideWhenOffline: false
+                }
+
+                property JsonObject passwordManager: JsonObject {
+                    property string colorMode: "primary"
+                    // auto | bitwarden | rbw | pass — auto takes the first CLI found.
+                    property string provider: "auto"
+                    // Seconds before a copied secret leaves the clipboard (0 = never).
+                    property int clipboardClear: 30
+                    // Minutes without use before the vault locks again (0 = never).
+                    property int autoLock: 15
+                    property bool lockWithScreen: true
+                    // Put the login matching the focused window first.
+                    property bool suggestForWindow: true
                 }
 
                 property JsonObject portWatcher: JsonObject {
@@ -7054,6 +7075,14 @@ Singleton {
                     property bool blurEnabled: true
                     property bool autoResize: true
                     property bool speakingPulseContinuous: true
+                    // Toast in the widget when someone joins or leaves your channel
+                    property bool joinLeaveNotices: true
+                    // Push-to-talk chip (lit while transmitting) when Discord is in PTT mode
+                    property bool pttIndicator: true
+                    // DM and mention toasts in the widget (Vesktop companion only)
+                    property bool messageNotices: true
+                    // Show the message text in those toasts, not only who sent it
+                    property bool messagePreview: true
                     // Pin the overlay on screen while the bridge sees a call
                     property bool autoPin: false
                 }
@@ -7185,6 +7214,10 @@ Singleton {
                 property bool enableManualScale: false
                 property real autoScaleFactor: 1.0 // Multiplier for automatic scaling (0.5 to 1.5)
                 property real scale: 0.18 // Relative to screen size (used when enableManualScale is true)
+                // Scrolling layout overview, drawn like the scrolloverview plugin: each
+                // workspace card is the monitor at this scale, cards this far apart (px).
+                property real scrollingScale: 0.6
+                property int scrollingWorkspaceGap: 60
                 property string animationStyle: "zoom" // Options: "bounce", "smooth", "zoom", "none"
                 property bool enableCascadeAnimation: true
                 property real rows: 2

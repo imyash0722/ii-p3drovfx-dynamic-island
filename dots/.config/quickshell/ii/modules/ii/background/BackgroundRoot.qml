@@ -68,6 +68,10 @@ PanelWindow {
     // would freeze the PREVIOUS wallpaper's decode size (native on boot, or the wrong size after
     // a preset switch). The wallpaper source is committed to the plane only while this is true.
     property bool wallpaperSizeFresh: false
+    // The file revision (WallpaperLayout.fileRevisions) the probe last answered
+    // for: a file rewritten in place keeps its path, so `wallpaperSizeFresh`
+    // alone cannot tell the old answer from the new one.
+    property int probedRevision: 0
 
     // State controllers
     WallpaperSizeProbe {
@@ -79,12 +83,14 @@ PanelWindow {
             bgRoot.recalcWallpaperScale();
             bgRoot.wallpaperSizeKnown = true;
             bgRoot.wallpaperSizeFresh = true;
+            bgRoot.probedRevision = WallpaperLayout.revisionOf(bgRoot.wallpaperPath);
         }
         // A missing or failing `magick` must never keep the wallpaper effects switched off for the
         // whole session - let them capture the screen-sized guess instead.
         onExited: (exitCode, exitStatus) => {
             bgRoot.wallpaperSizeKnown = true;
             bgRoot.wallpaperSizeFresh = true;
+            bgRoot.probedRevision = WallpaperLayout.revisionOf(bgRoot.wallpaperPath);
         }
     }
 
@@ -95,6 +101,7 @@ PanelWindow {
         onTriggered: {
             bgRoot.wallpaperSizeKnown = true;
             bgRoot.wallpaperSizeFresh = true;
+            bgRoot.probedRevision = WallpaperLayout.revisionOf(bgRoot.wallpaperPath);
         }
     }
 
@@ -167,7 +174,7 @@ PanelWindow {
         id: overviewController
         active: (Config.options.background.useBackgroundOverviewAlways ?? false)
             || bgRoot.lockEffectRequested
-            || (GlobalStates.overviewBackgroundActive && (bgRoot.isMonitorFocused || bgRoot.mirroredOverview))
+            || (GlobalStates.overviewBackgroundActive && (bgRoot.isOverviewMonitor || bgRoot.mirroredOverview))
             || (Boolean(Config.options.background?.zoomOutEnabled) && bgRoot.scratchpadOpenOnMonitor)
         // Only where the overview is what would zoom this wallpaper in the first place.
         held: GlobalStates.overviewDragging && bgRoot.isMonitorFocused && !bgRoot.lockEffectRequested
@@ -177,7 +184,7 @@ PanelWindow {
         heldProgress: GlobalStates.gestureDragProgress
         style: bgRoot.lockEffectActive ? bgRoot.lockEffectStyle : Config.options.background.overviewBackgroundStyle
         lockDriven: bgRoot.lockEffectActive
-        openHold: GlobalStates.overviewZoomHeld && (bgRoot.isMonitorFocused || bgRoot.mirroredOverview) && !bgRoot.lockEffectActive
+        openHold: GlobalStates.overviewZoomHeld && (bgRoot.isOverviewMonitor || bgRoot.mirroredOverview) && !bgRoot.lockEffectActive
         legacyStyle: Config.options.background.zoomOutStyle
         videoEffectsDisabled: bgRoot.videoEffectsDisabled
         screenWidth: bgRoot.screen.width
@@ -206,24 +213,24 @@ PanelWindow {
 
     readonly property bool isGnomeLikeOverview: overviewController.isGnomeLike
 
-    // Publish the overview background transform for the focused monitor.
+    // Publish the overview background transform for the overview's monitor.
     Binding {
         target: GlobalStates
         property: "overviewZoomScale"
         value: bgRoot.isGnomeLikeOverview ? overviewController.scale : 1.0
-        when: bgRoot.isMonitorFocused
+        when: bgRoot.isOverviewMonitor
     }
     Binding {
         target: GlobalStates
         property: "overviewZoomOriginX"
         value: bgRoot.isGnomeLikeOverview ? overviewController.scaleOriginX : 0.5
-        when: bgRoot.isMonitorFocused
+        when: bgRoot.isOverviewMonitor
     }
     Binding {
         target: GlobalStates
         property: "overviewZoomOriginY"
         value: bgRoot.isGnomeLikeOverview ? overviewController.scaleOriginY : 0.5
-        when: bgRoot.isMonitorFocused
+        when: bgRoot.isOverviewMonitor
     }
 
     // Expose properties from controllers for internal bindings
@@ -279,6 +286,8 @@ PanelWindow {
     // Real Gnome shows the overview on every monitor, not just the focused one.
     readonly property bool mirroredOverview: GlobalStates.realGnomeMirrored && overviewController.isRealGnome
     readonly property bool isMonitorFocused: Quickshell.screens.length <= 1 || ((Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "") == (monitor ? monitor.name : ""))
+    // The overview's monitor stays the one it opened on while the pointer roams.
+    readonly property bool isOverviewMonitor: Quickshell.screens.length <= 1 || GlobalStates.overviewMonitor === (monitor ? monitor.name : "")
     readonly property bool loopEnabled: !videoEffectsDisabled && Config.options.background.parallax.loop
     readonly property var intensitySpans: [20, 15, 12, 10, 8, 7, 5, 4, 3, 2]
     readonly property int chunkSize: {
@@ -442,7 +451,7 @@ PanelWindow {
         animation: Appearance.animation.elementMoveFast.colorAnimation.createObject(this)
     }
 
-    readonly property bool isScrollingLayout: Persistent.states.hyprland.layout === "scrolling"
+    readonly property bool isScrollingLayout: GlobalStates.scrollingLayoutActive
 
     property var zoomLevels: ({
         "in": {
@@ -500,6 +509,12 @@ PanelWindow {
     onWallpaperPathChanged: {
         // A new file has unknown dimensions until its own probe answers; the
         // decode-geometry gate in WallpaperImage holds the source until then.
+        bgRoot.wallpaperSizeFresh = false;
+        bgRoot.updateZoomScale();
+    }
+    // The same file rewritten (a quarter turn written into it): new dimensions.
+    readonly property int wallpaperRevision: WallpaperLayout.revisionOf(bgRoot.wallpaperPath)
+    onWallpaperRevisionChanged: {
         bgRoot.wallpaperSizeFresh = false;
         bgRoot.updateZoomScale();
     }
@@ -747,6 +762,7 @@ PanelWindow {
             framingKey: bgRoot.framingSourcePath
             wallpaperSizeKnown: bgRoot.wallpaperSizeKnown
             wallpaperSizeFresh: bgRoot.wallpaperSizeFresh
+            probedRevision: bgRoot.probedRevision
             wallpaperToScreenRatio: bgRoot.wallpaperToScreenRatio
             movableXSpace: bgRoot.movableXSpace
             movableYSpace: bgRoot.movableYSpace

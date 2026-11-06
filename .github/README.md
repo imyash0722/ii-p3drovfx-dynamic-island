@@ -231,6 +231,8 @@ For full technical specifications and implementation details, see [**CHANGES.md*
 - **[hnpf](https://github.com/hnpf):** Nothing widgets design.
 - **[gowall](https://github.com/Achno/gowall):** Dynamic icons theme system.
 - **[hyprmon](https://github.com/erans/hyprmon):** Monitor management in settings.
+- **[VietNguyenVN](https://github.com/VietNguyenVN/End4_plus):** zscroll rows layout.
+- **[hyprland-scroll-overview](https://github.com/yayuuu/hyprland-scroll-overview):** zscroll overview plugin by [yayuuu](https://github.com/yayuuu).
 - **[Quickshell](https://quickshell.org/):** Widget system.
 - **[Hyprland](https://hypr.land/):** Compositor.
 

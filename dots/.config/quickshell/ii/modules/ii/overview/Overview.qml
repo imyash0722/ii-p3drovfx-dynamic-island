@@ -43,7 +43,7 @@ Scope {
                     // the stable ShellScreen name and require a real focused
                     // monitor so only one surface can be active.
                     readonly property string screenName: modelData ? modelData.name : ""
-                    readonly property string focusedMonitorName: Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+                    readonly property string focusedMonitorName: GlobalStates.overviewMonitor
                     property bool monitorIsFocused: Quickshell.screens.length <= 1
                         || (screenName !== "" && focusedMonitorName !== "" && screenName === focusedMonitorName)
                     property bool contentKeepAlive: false
@@ -77,7 +77,7 @@ Scope {
                     // (unmapped while closed, so it draws nothing): rebuilding the
                     // search and every workspace row on each open is what stalled
                     // the first frames, worst after the shell had been idle.
-                    readonly property bool residentForScrolling: Persistent.states.hyprland.layout === "scrolling"
+                    readonly property bool residentForScrolling: GlobalStates.scrollingLayoutActive
                         && (Config.options.overview.enable ?? true)
                     active: monitorIsFocused && (contentKeepAlive || GlobalStates.overviewOpen || visualActive || residentForScrolling)
 
@@ -97,7 +97,7 @@ Scope {
                         readonly property bool keepAlive: searchWidget.keepAlive
                         readonly property bool isBottomBar: !BarPlacement.vertical && BarPlacement.bottom
 
-                        readonly property bool isScrollingLayout: Persistent.states.hyprland.layout === "scrolling"
+                        readonly property bool isScrollingLayout: GlobalStates.scrollingLayoutActive
                         readonly property var backgroundController: GlobalStates.overviewBackgroundControllerFor(root.screen?.name ?? "")
                         // Real Gnome: compact thumbnails on top, the window picker
                         // in the free area under them.
@@ -190,8 +190,20 @@ Scope {
                          * revealed it underneath the results. Recomputing from the
                          * primitives cannot be stale, whoever calls it.
                          */
+                        // On zscroll the scrolloverview plugin's overview stands behind
+                        // the search in place of the shell's, from open to close.
+                        readonly property bool pluginOverviewWanted: root.monitorIsFocused && GlobalStates.overviewOpen
+                            && !GlobalStates.searchConnectActive && GlobalStates.zscrollLayoutActive
+                            && !GlobalStates.searchOnlyMode && !GlobalStates.panelOpenedDirectly
+                        onPluginOverviewWantedChanged: {
+                            if (root.pluginOverviewWanted)
+                                ZscrollPluginOverview.open();
+                            else
+                                ZscrollPluginOverview.close();
+                        }
                         function evaluateOverviewShouldShow() {
-                            return !root.evaluateSearchSurfaceOwned()
+                            return !ZscrollPluginOverview.hosting
+                                && !root.evaluateSearchSurfaceOwned()
                                 && !GlobalStates.searchOnlyMode
                                 && !GlobalStates.searchCenterMode
                                 && !Config.options.search.suggestions.enable
@@ -433,8 +445,11 @@ Scope {
 
                         // Closed but still mapped (scrolling layout), the window must take
                         // no input at all: an empty item, not a null one, is the empty region.
+                        // With the plugin's overview behind, only the search takes the
+                        // pointer: the rest of the screen is the plugin's to click.
                         mask: Region {
-                            item: root.monitorIsFocused && GlobalStates.overviewOpen ? contentItem : noInputRegion
+                            item: !(root.monitorIsFocused && GlobalStates.overviewOpen) ? noInputRegion
+                                : (ZscrollPluginOverview.hosting ? searchWidgetWrapper : contentItem)
                         }
                         Item {
                             id: noInputRegion
@@ -577,7 +592,6 @@ Scope {
                                 // Driven directly — no Behavior, to avoid QML skipping anim while invisible
                                 property real slideY: initialYOffset
                                 property real slideOpacity: 0.0
-
                                 opacity: isNotchMode ? 0.0 : slideOpacity
                                 transform: [
                                     Translate {
@@ -810,7 +824,8 @@ Scope {
                                 active: (root.visible || realOverviewLoader.residentForScrolling) && !GlobalStates.searchOnlyMode && !GlobalStates.searchCenterMode && !Config.options.search.suggestions.enable && (Config?.options.overview.enable ?? true) && root.isScrollingLayout && !root.searchPanelOwned
                                 // The rows play their own entrance and exit; the window
                                 // only shows the layer while the search is on screen.
-                                visible: searchWidgetWrapper.slideOpacity > 0.001
+                                // ...or while its windows zoom back to full size after a close.
+                                visible: searchWidgetWrapper.slideOpacity > 0.001 || (item?.drawing ?? false)
 
                                 sourceComponent: ScrollingOverviewWidget {
                                     id: scrollingOverview
