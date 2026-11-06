@@ -1,0 +1,161 @@
+name: Upstream Sync Check
+
+on:
+  schedule:
+    # Run every 6 hours (at 00:00, 06:00, 12:00, 18:00 UTC)
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      upstream_repo:
+        description: 'Upstream repository (owner/repo)'
+        required: true
+        default: 'P3DROVFX/ii-p3drovfx'
+      upstream_branch:
+        description: 'Upstream branch to check'
+        required: true
+        default: 'dev'
+      local_branch:
+        description: 'Local branch to compare'
+        required: true
+        default: 'dev'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-upstream:
+    name: Check Upstream Updates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout local branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.local_branch || 'dev' }}
+          fetch-depth: 0
+
+      - name: Configure Git & fetch upstream
+        id: fetch-upstream
+        env:
+          UPSTREAM_REPO: ${{ github.event.inputs.upstream_repo || 'P3DROVFX/ii-p3drovfx' }}
+          UPSTREAM_BRANCH: ${{ github.event.inputs.upstream_branch || 'dev' }}
+          LOCAL_BRANCH: ${{ github.event.inputs.local_branch || 'dev' }}
+        run: |
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch upstream "${UPSTREAM_BRANCH}"
+
+          BEHIND_COUNT=$(git rev-list --count "HEAD..upstream/${UPSTREAM_BRANCH}")
+          LOCAL_SHA=$(git rev-parse --short HEAD)
+          UPSTREAM_SHA=$(git rev-parse --short "upstream/${UPSTREAM_BRANCH}")
+
+          echo "behind_count=${BEHIND_COUNT}" >> "$GITHUB_OUTPUT"
+          echo "local_sha=${LOCAL_SHA}" >> "$GITHUB_OUTPUT"
+          echo "upstream_sha=${UPSTREAM_SHA}" >> "$GITHUB_OUTPUT"
+          echo "upstream_repo=${UPSTREAM_REPO}" >> "$GITHUB_OUTPUT"
+          echo "upstream_branch=${UPSTREAM_BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "local_branch=${LOCAL_BRANCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Process Sync Status & Manage Issues
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEHIND_COUNT: ${{ steps.fetch-upstream.outputs.behind_count }}
+          LOCAL_SHA: ${{ steps.fetch-upstream.outputs.local_sha }}
+          UPSTREAM_SHA: ${{ steps.fetch-upstream.outputs.upstream_sha }}
+          UPSTREAM_REPO: ${{ steps.fetch-upstream.outputs.upstream_repo }}
+          UPSTREAM_BRANCH: ${{ steps.fetch-upstream.outputs.upstream_branch }}
+          LOCAL_BRANCH: ${{ steps.fetch-upstream.outputs.local_branch }}
+        run: |
+          LABEL="upstream-sync"
+
+          EXISTING_ISSUE_NUM=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --label "${LABEL}" \
+            --state open \
+            --limit 1 \
+            --json number \
+            --jq '.[0].number // empty')
+
+          if [ "${BEHIND_COUNT}" -gt 0 ]; then
+            echo "Upstream is ahead by ${BEHIND_COUNT} commit(s)."
+
+            COMMITS_LOG=$(git log --pretty=format:"* \`%h\` - %s (%an, %ar)" "HEAD..upstream/${UPSTREAM_BRANCH}")
+
+            cat <<EOF > /tmp/issue_body.md
+          ## 🚨 Upstream Repository is Ahead
+
+          The upstream repository [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}) has **${BEHIND_COUNT}** new commit(s) on \`${UPSTREAM_BRANCH}\` that are not yet integrated into this repository's \`${LOCAL_BRANCH}\` branch.
+
+          - **Upstream commit**: \`${UPSTREAM_SHA}\` (\`${UPSTREAM_REPO}:${UPSTREAM_BRANCH}\`)
+          - **Current commit**: \`${LOCAL_SHA}\` (\`${LOCAL_BRANCH}\`)
+          - **Compare view**: [View Diff on GitHub](https://github.com/${{ github.repository }}/compare/${LOCAL_BRANCH}...${UPSTREAM_REPO}:${UPSTREAM_BRANCH})
+
+          ---
+
+          ### 📦 New Upstream Commits
+          ${COMMITS_LOG}
+
+          ---
+
+          ### 🛠️ How to Sync & Maintain Protections
+
+          Follow the project guidelines in \`GEMINI.md\` to pull, verify, and deploy:
+
+          \`\`\`bash
+          # 1. Fetch upstream updates
+          git fetch upstream ${UPSTREAM_BRANCH}
+
+          # 2. Merge upstream updates into local branch
+          git merge upstream/${UPSTREAM_BRANCH}
+
+          # 3. Verify all contract tests pass 100%
+          python3 dots/.config/quickshell/ii/scripts/tests/test_dynamic_island_overview_unstick_contract.py
+          python3 dots/.config/quickshell/ii/scripts/tests/test_dynamic_island_escape_and_settings_contract.py
+          python3 dots/.config/quickshell/ii/scripts/tests/test_dynamic_island_overlay_autohide_contract.py
+          python3 dots/.config/quickshell/ii/scripts/tests/test_notification_app_icon_contract.py
+          python3 dots/.config/quickshell/ii/scripts/tests/test_dock_island_bar_reclaim_contract.py
+
+          # 4. Push cleanly to fork
+          git push origin ${LOCAL_BRANCH}
+
+          # 5. Deploy locally & restart Quickshell
+          rsync -av dots/.config/quickshell/ii/ ~/.config/quickshell/ii/
+          git rev-parse HEAD > ~/.config/quickshell/ii/.active-commit
+          ./setup-ii-p3drovfx.sh restart
+          \`\`\`
+
+          > _This issue was automatically generated by the [Upstream Sync Check](https://github.com/${{ github.repository }}/actions/workflows/upstream-sync-check.yml) workflow._
+          EOF
+
+            sed -i 's/^          //' /tmp/issue_body.md
+
+            TITLE="[Upstream Sync] ${BEHIND_COUNT} new commit(s) available from ${UPSTREAM_REPO}"
+
+            if [ -n "${EXISTING_ISSUE_NUM}" ]; then
+              echo "Updating existing issue #${EXISTING_ISSUE_NUM}..."
+              gh issue edit "${EXISTING_ISSUE_NUM}" \
+                --repo "${{ github.repository }}" \
+                --title "${TITLE}" \
+                --body-file /tmp/issue_body.md
+              gh issue comment "${EXISTING_ISSUE_NUM}" \
+                --repo "${{ github.repository }}" \
+                --body "🔄 **Upstream Sync Alert Update**: ${UPSTREAM_REPO}:${UPSTREAM_BRANCH} now has ${BEHIND_COUNT} new commit(s) (latest commit: \`${UPSTREAM_SHA}\`)."
+            else
+              echo "Creating new issue..."
+              gh issue create \
+                --repo "${{ github.repository }}" \
+                --title "${TITLE}" \
+                --body-file /tmp/issue_body.md \
+                --label "${LABEL}"
+            fi
+
+          else
+            echo "Fork is completely up to date with upstream (${UPSTREAM_REPO}:${UPSTREAM_BRANCH})."
+
+            if [ -n "${EXISTING_ISSUE_NUM}" ]; then
+              echo "Closing existing issue #${EXISTING_ISSUE_NUM} because upstream changes have been merged..."
+              gh issue close "${EXISTING_ISSUE_NUM}" \
+                --repo "${{ github.repository }}" \
+                --comment "✅ Upstream updates have been successfully integrated into \`${LOCAL_BRANCH}\` @ \`${LOCAL_SHA}\`. Automatically closing this issue."
+            fi
+          fi
