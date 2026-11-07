@@ -9,6 +9,7 @@ import Qt5Compat.GraphicalEffects
 import Qt.labs.synchronizer
 import qs.modules.common.functions
 import "phone"
+import "sports"
 
 Item {
     id: root
@@ -176,6 +177,12 @@ Item {
             name: Translation.tr("Phone"),
             enabled: Config.options.policies.phone !== 0,
             component: phonePlaceholder
+        },
+        {
+            icon: "sports_and_outdoors",
+            name: Translation.tr("Sports"),
+            enabled: true,
+            component: sportsTab
         }
     ]
 
@@ -642,6 +649,10 @@ Item {
         Component {
             id: phonePlaceholder
             Phone {}
+        }
+        Component {
+            id: sportsTab
+            SportsContent {}
         }
         Component {
             id: placeholder
