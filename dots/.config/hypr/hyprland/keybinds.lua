@@ -474,15 +474,15 @@ hl.bind("SUPER + SHIFT + P", hl.dsp.exec_cmd("playerctl play-pause"),
     { locked = true, description = "Misc: Play/pause media" })
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true, ignore_mods = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true, ignore_mods = true })
-hl.bind("XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),
+hl.bind("XF86AudioMute", hl.dsp.exec_cmd(hyprScripts .. "/volume-mute.sh sink"),
     { locked = true, ignore_mods = true, description = "Misc: Toggle mute" })
-hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),
+hl.bind("SUPER + SHIFT + M", hl.dsp.exec_cmd(hyprScripts .. "/volume-mute.sh sink"),
     { locked = true, description = "Misc: Toggle mute" })
-hl.bind("ALT + XF86AudioMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_SOURCE@ toggle"),
+hl.bind("ALT + XF86AudioMute", hl.dsp.exec_cmd(hyprScripts .. "/volume-mute.sh source"),
     { locked = true, ignore_mods = true })
-hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_SOURCE@ toggle"),
+hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd(hyprScripts .. "/volume-mute.sh source"),
     { locked = true, ignore_mods = true, description = "Misc: Toggle mic" })
-hl.bind("SUPER + ALT + M", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_SOURCE@ toggle"),
+hl.bind("SUPER + ALT + M", hl.dsp.exec_cmd(hyprScripts .. "/volume-mute.sh source"),
     { locked = true, description = "Misc: Toggle mic" })
 hl.bind("SUPER + Z", hl.dsp.global("quickshell:mediaModeToggle"), { locked = true, description = "Shell: Toggle media mode" })
 

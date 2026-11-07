@@ -19,6 +19,7 @@ import unittest
 REPO_ROOT = Path(__file__).resolve().parents[6]
 KEYBINDS_LUA_PATH = REPO_ROOT / "dots/.config/hypr/hyprland/keybinds.lua"
 TOUCHPAD_SCRIPT_PATH = REPO_ROOT / "dots/.config/hypr/hyprland/scripts/touchpad-toggle.sh"
+MUTE_SCRIPT_PATH = REPO_ROOT / "dots/.config/hypr/hyprland/scripts/volume-mute.sh"
 
 
 class FnKeysAndTouchpadContractTests(unittest.TestCase):
@@ -26,9 +27,11 @@ class FnKeysAndTouchpadContractTests(unittest.TestCase):
     def setUpClass(cls):
         cls.keybinds = KEYBINDS_LUA_PATH.read_text(encoding="utf-8")
 
-    def test_touchpad_script_exists_and_is_executable(self):
+    def test_touchpad_and_mute_scripts_exist_and_are_executable(self):
         self.assertTrue(TOUCHPAD_SCRIPT_PATH.is_file(), "touchpad-toggle.sh does not exist")
         self.assertTrue(os.access(TOUCHPAD_SCRIPT_PATH, os.X_OK), "touchpad-toggle.sh is not executable")
+        self.assertTrue(MUTE_SCRIPT_PATH.is_file(), "volume-mute.sh does not exist")
+        self.assertTrue(os.access(MUTE_SCRIPT_PATH, os.X_OK), "volume-mute.sh is not executable")
 
     def test_touchpad_binds_are_not_commented_out(self):
         # Must not be commented out
@@ -55,7 +58,7 @@ class FnKeysAndTouchpadContractTests(unittest.TestCase):
     def test_audio_mute_binds_have_ignore_mods(self):
         # XF86AudioMute
         mute_match = re.search(
-            r'hl\.bind\("XF86AudioMute",\s*hl\.dsp\.exec_cmd\("wpctl set-mute [^"]+"\),\s*\{([^}]+)\}\)',
+            r'hl\.bind\("XF86AudioMute",\s*hl\.dsp\.exec_cmd\([^)]+\),\s*\{([^}]+)\}\)',
             self.keybinds,
         )
         self.assertIsNotNone(mute_match, "Could not find active XF86AudioMute bind definition")
@@ -65,7 +68,7 @@ class FnKeysAndTouchpadContractTests(unittest.TestCase):
 
         # XF86AudioMicMute
         mic_match = re.search(
-            r'hl\.bind\("XF86AudioMicMute",\s*hl\.dsp\.exec_cmd\("wpctl set-mute [^"]+"\),\s*\{([^}]+)\}\)',
+            r'hl\.bind\("XF86AudioMicMute",\s*hl\.dsp\.exec_cmd\([^)]+\),\s*\{([^}]+)\}\)',
             self.keybinds,
         )
         self.assertIsNotNone(mic_match, "Could not find active XF86AudioMicMute bind definition")

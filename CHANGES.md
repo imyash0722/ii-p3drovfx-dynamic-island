@@ -167,6 +167,9 @@ Upstream commit `3b9eda7b5` commented out default touchpad bindings (`XF86Touchp
 - **Modifier Immunity (`ignore_mods = true`)**:
   - Added `ignore_mods = true` to `XF86AudioMute`, `XF86AudioMicMute`, `XF86AudioRaiseVolume`, `XF86AudioLowerVolume`, and media playback keys (`XF86AudioPlay`, `XF86AudioPause`, `XF86AudioNext`, `XF86AudioPrev`).
   - Switched audio mute sink to `@DEFAULT_AUDIO_SINK@` for consistent WirePlumber device targeting.
+- **Hardware Mute LED Synchronization (`volume-mute.sh`)**:
+  - Introduced `volume-mute.sh` to synchronize the laptop motherboard's ALSA Master/Speaker and Capture switches with the default PipeWire sink and source.
+  - Fixes stuck mute/micmute LEDs on Lenovo ThinkBook, ThinkPad, and IdeaPad laptops when audio is playing or muted through Bluetooth headphones or USB devices.
 - **Contract Test Suite**:
   - Implemented `test_fn_keys_and_touchpad_contract.py` to prevent future upstream merges from disabling or clobbering Fn hardware bindings.
 
