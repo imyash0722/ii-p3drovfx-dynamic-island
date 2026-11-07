@@ -149,3 +149,24 @@ Dedicated Python contract tests have been introduced under `scripts/tests/`:
    - Verifies strict regex validation, image fallback, and container clipping.
 4. `test_dock_island_bar_reclaim_contract.py`:
    - Verifies layout and geometry recovery for dock and island placements.
+5. `test_fn_keys_and_touchpad_contract.py`:
+   - Verifies touchpad toggle and on/off binds remain active and bound to `touchpad-toggle.sh`.
+   - Verifies `ignore_mods = true` and `locked = true` on audio mute, mic mute, volume up/down, and media keys so keyboard locks (NumLock) or firmware modifiers never drop keystrokes.
+
+---
+
+## 8. Fn Keys & Touchpad Hardware Key Preservation
+
+### Overview
+Upstream commit `3b9eda7b5` commented out default touchpad bindings (`XF86TouchpadToggle`, `XF86TouchpadOn`, `XF86TouchpadOff`), which broke laptop touchpad toggle keys for downstreams. Additionally, multimedia and mute keys (`XF86AudioMute`, `XF86AudioMicMute`, `XF86AudioRaiseVolume`, `XF86AudioLowerVolume`) lacked `ignore_mods = true`, causing Hyprland to reject those Fn events whenever devices (such as `ideapad-extra-buttons`, external keyboards, or bluetooth headsets) report active NumLock/modifier states.
+
+### Key Changes
+- **Touchpad Binds Restored**:
+  - Restored `XF86TouchpadToggle`, `XF86TouchpadOn`, and `XF86TouchpadOff` in `dots/.config/hypr/hyprland/keybinds.lua`.
+  - Linked to `hyprScripts .. "/touchpad-toggle.sh"` with `ignore_mods = true`.
+- **Modifier Immunity (`ignore_mods = true`)**:
+  - Added `ignore_mods = true` to `XF86AudioMute`, `XF86AudioMicMute`, `XF86AudioRaiseVolume`, `XF86AudioLowerVolume`, and media playback keys (`XF86AudioPlay`, `XF86AudioPause`, `XF86AudioNext`, `XF86AudioPrev`).
+  - Switched audio mute sink to `@DEFAULT_AUDIO_SINK@` for consistent WirePlumber device targeting.
+- **Contract Test Suite**:
+  - Implemented `test_fn_keys_and_touchpad_contract.py` to prevent future upstream merges from disabling or clobbering Fn hardware bindings.
+
