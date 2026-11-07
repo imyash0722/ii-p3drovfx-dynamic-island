@@ -10,6 +10,7 @@ import Qt.labs.synchronizer
 import qs.modules.common.functions
 import qs.modules.common.dashboardWidgets.todo
 import "phone"
+import "sports"
 
 Item {
     id: root
@@ -134,7 +135,7 @@ Item {
     property bool animeCloset: Config.options.policies.weeb === 2
     property bool ankiEnabled: Config.options.policies.anki !== 0
 
-    // Tab and Page mapping - To Do and Media only
+    // Tab and Page mapping - To Do, Media, and Sports
     property var tabs: [
         {
             icon: "checklist",
@@ -147,6 +148,12 @@ Item {
             name: Translation.tr("Media"),
             enabled: true,
             component: media
+        },
+        {
+            icon: "sports_and_outdoors",
+            name: Translation.tr("Sports"),
+            enabled: true,
+            component: sportsTab
         }
     ]
 
@@ -606,6 +613,10 @@ Item {
         Component {
             id: media
             SidebarPlayerControl {}
+        }
+        Component {
+            id: sportsTab
+            SportsContent {}
         }
         Component {
             id: wallpaperBrowser
