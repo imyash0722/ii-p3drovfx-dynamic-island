@@ -29,7 +29,7 @@ Scope {
         id: cornerPanelWindow
         property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
         property bool fullscreen
-        visible: Config.ready && ((Config.options.appearance.fakeScreenRounding === 1 || Config.options.appearance.fakeScreenRounding === 2) || Config.options.sidebar.cornerOpen.enable)
+        visible: Config.ready && ((Config.options.appearance.fakeScreenRounding === 1 || Config.options.appearance.fakeScreenRounding === 2) || cornerPanelWindow.isCornerOpenActive)
         property var corner
 
         readonly property bool isTopLeft: corner === RoundCorner.CornerEnum.TopLeft
@@ -41,7 +41,11 @@ Scope {
         readonly property bool isLeft: isTopLeft || isBottomLeft
         readonly property bool isRight: isTopRight || isBottomRight
 
-        readonly property bool isCornerOpenActive: Config.ready && Config.options.sidebar.cornerOpen.enable && (Config.options.sidebar.cornerOpen.bottom == cornerPanelWindow.isBottom)
+        readonly property bool isCornerOpenActive: Config.ready && Config.options.sidebar.cornerOpen.enable && (
+            Config.options.sidebar.cornerOpen.bottom
+                ? (Config.options.sidebar.cornerOpen.leftOnly ? cornerPanelWindow.isBottomLeft : cornerPanelWindow.isBottom)
+                : (Config.options.sidebar.cornerOpen.leftOnly ? cornerPanelWindow.isTopLeft : cornerPanelWindow.isTop)
+        )
 
         exclusionMode: ExclusionMode.Ignore
         Component.onCompleted: {
@@ -65,8 +69,8 @@ Scope {
             bottom: (Config.options.interactions.deadPixelWorkaround.enable && cornerPanelWindow.anchors.bottom) * -1
         }
 
-        implicitWidth: isCornerOpenActive ? Math.max(Appearance.rounding.screenRounding, Config.options.sidebar.cornerOpen.cornerRegionWidth) : Appearance.rounding.screenRounding
-        implicitHeight: isCornerOpenActive ? Math.max(Appearance.rounding.screenRounding, Config.options.sidebar.cornerOpen.cornerRegionHeight) : Appearance.rounding.screenRounding
+        implicitWidth: isCornerOpenActive ? Math.max((Config.options.appearance.fakeScreenRounding !== 0 ? Appearance.rounding.screenRounding : 0), Config.options.sidebar.cornerOpen.cornerRegionWidth) : Appearance.rounding.screenRounding
+        implicitHeight: isCornerOpenActive ? Math.max((Config.options.appearance.fakeScreenRounding !== 0 ? Appearance.rounding.screenRounding : 0), Config.options.sidebar.cornerOpen.cornerRegionHeight) : Appearance.rounding.screenRounding
 
         RoundCorner {
             id: cornerWidget

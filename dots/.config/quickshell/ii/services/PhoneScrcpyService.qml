@@ -817,7 +817,7 @@ Singleton {
     // ─── scrcpy --version probe ──────────────────────────────
     Process {
         id: scrcpyVersionProc
-        command: ["scrcpy", "--version"]
+        command: ["sh", "-c", "command -v scrcpy >/dev/null 2>&1 && scrcpy --version"]
         running: false
 
         stdout: SplitParser {

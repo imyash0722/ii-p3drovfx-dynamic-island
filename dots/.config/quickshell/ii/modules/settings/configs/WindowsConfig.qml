@@ -98,6 +98,21 @@ Item {
                 onMoved: windowsRoot.appearance.gapsOut = Math.round(value)
             }
 
+            ConfigSlider {
+                id: windowRoundingSlider
+                buttonIcon: "rounded_corner"
+                text: Translation.tr("Window corner rounding")
+                from: 0
+                to: 35
+                stepSize: 1
+                stopIndicatorValues: [0]
+                usePercentTooltip: false
+                badgeText: Math.round(value) === 0 ? Translation.tr("Square (0 px)") : `${Math.round(value)} px`
+                tooltipContent: badgeText
+                value: windowsRoot.appearance.windowRounding ?? 0
+                onMoved: windowsRoot.appearance.windowRounding = Math.round(value)
+            }
+
             // Borderless is the slider's zero; the width it had comes back past zero.
             ConfigSlider {
                 id: borderSlider

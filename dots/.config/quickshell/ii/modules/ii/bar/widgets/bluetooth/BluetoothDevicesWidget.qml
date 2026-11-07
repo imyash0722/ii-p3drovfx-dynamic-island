@@ -13,28 +13,24 @@ MouseArea {
     property int deviceIndex: 0
     readonly property var primaryDevice: activeDevices.length > 0 ? activeDevices[deviceIndex % activeDevices.length] : null
     readonly property bool hasDevices: activeDevices.length > 0
+    readonly property bool isAvailable: BluetoothStatus.available
 
-    onHasDevicesChanged: {
+    Component.onCompleted: {
         if (typeof rootItem !== "undefined" && typeof rootItem.toggleVisible === "function")
-            rootItem.toggleVisible(hasDevices);
+            rootItem.toggleVisible(isAvailable);
     }
 
     Connections {
         target: BluetoothStatus
-        function onConnectedDevicesChanged() {
+        function onAvailableChanged() {
             if (typeof rootItem !== "undefined" && typeof rootItem.toggleVisible === "function")
-                rootItem.toggleVisible(BluetoothStatus.connectedDevices.length > 0);
+                rootItem.toggleVisible(BluetoothStatus.available);
         }
     }
 
-    Component.onCompleted: {
-        if (typeof rootItem !== "undefined" && typeof rootItem.toggleVisible === "function")
-            rootItem.toggleVisible(hasDevices);
-    }
-
-    visible: hasDevices
-    implicitWidth: hasDevices ? chip.implicitWidth : 0
-    implicitHeight: hasDevices ? Appearance.sizes.baseBarHeight : 0
+    visible: isAvailable
+    implicitWidth: isAvailable ? chip.implicitWidth : 0
+    implicitHeight: isAvailable ? Appearance.sizes.baseBarHeight : 0
 
     
 
@@ -66,18 +62,18 @@ MouseArea {
     Item {
         id: chip
         anchors.centerIn: parent
-        implicitWidth: layout.implicitWidth + 28
+        implicitWidth: layout.implicitWidth + (root.hasDevices ? 28 : 16)
         implicitHeight: Appearance.sizes.baseBarHeight - 6
 
         RowLayout {
             id: layout
             anchors.centerIn: parent
-            spacing: 10
+            spacing: root.hasDevices ? 10 : 0
 
             // Device icon - shows bluetooth_disabled when no devices
             MaterialSymbol {
                 iconSize: Appearance.font.pixelSize.larger
-                text: root.hasDevices ? Icons.getBluetoothDeviceMaterialSymbol(root.primaryDevice.icon) : "bluetooth_disabled"
+                text: root.hasDevices ? Icons.getBluetoothDeviceMaterialSymbol(root.primaryDevice.icon) : (BluetoothStatus.enabled ? "bluetooth" : "bluetooth_disabled")
                 color: root.hasDevices ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurfaceVariant
             }
 

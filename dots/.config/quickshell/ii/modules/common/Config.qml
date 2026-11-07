@@ -3101,6 +3101,7 @@ Singleton {
                 property string globalRounding: "large" // Legacy — migrated to roundingValue via onLoaded
                 property int roundingValue: 28 // -1 = not yet migrated, 0-48 = active slider value (default 24 after migration)
                 property int defaultBorderRadius: 18
+                property int windowRounding: 0
                 property bool toggleWindowRounding: true // Changes Hyprland window rounding to 0 if sharpMode is true
                 property real iconTintPercentage: 0.6
                 property JsonObject fonts: JsonObject {
@@ -5378,6 +5379,7 @@ Singleton {
                     property string date: "default"
                     property string timer: "expressive" // default | expressive | sculpt
                     property string recordIndicator: "expressive" // default | expressive | neural
+                    property string agyLauncher: "solid"
                 }
 
                 property JsonObject activeWindow: JsonObject {
@@ -5948,6 +5950,9 @@ Singleton {
                 property JsonObject power: JsonObject {
                     property string colorMode: "primary"
                 }
+                property JsonObject agyLauncher: JsonObject {
+                    property string colorMode: "tertiaryContainer"
+                }
                 property JsonObject policies: JsonObject {
                     property string colorMode: "primary"
                 }
@@ -6093,7 +6098,7 @@ Singleton {
 
             property JsonObject conflictKiller: JsonObject {
                 property bool autoKillNotificationDaemons: false
-                property bool autoKillTrays: false
+                property bool autoKillTrays: true
             }
 
             property JsonObject crosshair: JsonObject {
@@ -8055,6 +8060,7 @@ Singleton {
                 property JsonObject cornerOpen: JsonObject {
                     property bool enable: false
                     property bool bottom: false
+                    property bool leftOnly: false
                     property bool valueScroll: true
                     property bool clickless: false
                     property int cornerRegionWidth: 100

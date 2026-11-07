@@ -275,8 +275,8 @@ Item {
     property bool overviewBuilt: false
     /** 0..1, the island's own fade; the overview plays no entrance of its own. */
     property real overviewFade: 0
-    property int overviewRows: 2
-    property int overviewColumns: 3
+    property int overviewRows: Config.options.overview.rows ?? 2
+    property int overviewColumns: Config.options.overview.columns ?? 5
     property real overviewScale: 0.15
     property var overviewPanelWindow: null
     property int overviewMonitorIndex: 0

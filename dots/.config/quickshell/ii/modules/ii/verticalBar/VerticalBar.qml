@@ -189,7 +189,7 @@ Scope {
                     }
 
                     property bool superShow: false
-                    property bool mustShow: hoverTriggered || superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
+                    property bool mustShow: hoverTriggered || superShow || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
                     property real hiddenAmount: (Config.options.bar.autoHide.enable && !mustShow) ? Appearance.sizes.verticalBarWindowWidth : 0
                     Behavior on hiddenAmount {
                         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(barRoot)

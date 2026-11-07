@@ -19,6 +19,7 @@ hl.on("hyprland.start", function()
     -- cannot start (a Qt update it was not rebuilt for, most often) the guard says
     -- so with Hyprland's own notifications and opens a terminal to rebuild it.
     -- Plain qs when the guard is missing.
+    hl.exec_cmd("xrdb -merge ~/.Xresources")
     hl.exec_cmd("g=$HOME/.config/quickshell/$qsConfig/scripts/quickshell-guard/qs-guard.sh; "
         .. "if [ -x \"$g\" ]; then MALLOC_CONF=narenas:1 exec \"$g\" -c $qsConfig; "
         .. "else MALLOC_CONF=narenas:1 exec qs -c $qsConfig; fi")
@@ -63,5 +64,8 @@ hl.on("hyprland.start", function()
 end)
 
 hl.on("hyprland.shutdown", function()
+    local runtime_dir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
+    os.remove(runtime_dir .. "/hypr_session_active")
+    os.execute(HOME .. "/.local/bin/hyprmon ensure-internal 2>/dev/null")
     os.execute("systemctl --user stop hyprland-session.target && sleep 0.1")
 end)

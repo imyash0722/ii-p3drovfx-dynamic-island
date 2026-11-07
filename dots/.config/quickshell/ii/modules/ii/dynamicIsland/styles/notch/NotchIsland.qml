@@ -779,8 +779,8 @@ Scope {
      * desktop pushed the bar's own widgets far out of the way to make room.
      */
     readonly property bool integratedOverview: IslandPolicy.ownsOverview
-    readonly property int overviewRows: 2
-    readonly property int overviewColumns: 3
+    readonly property int overviewRows: Config.options.overview.rows ?? 2
+    readonly property int overviewColumns: Config.options.overview.columns ?? 5
     /** Relative to the screen, like Config.options.overview.scale. */
     readonly property real overviewScale: 0.15
 
@@ -2845,7 +2845,7 @@ Scope {
                 id: contentShape
                 anchors.fill: contentClip
                 visible: false
-                layer.enabled: true
+                layer.enabled: false
 
                 // The silhouette itself, in every shell: one item that only changes its
                 // properties. Two children swapped by `visible` under this hidden layer
@@ -2879,14 +2879,13 @@ Scope {
                 clip: true
 
                 /**
-                 * Clipped to the body's *shape*, not its bounding box.
-                 *
-                 * `clip` is rectangular, so anything a face drew near its bottom edge
-                 * - a background, a row, a fading icon - showed in the triangles
-                 * outside the rounded corners, most visibly while the surface was
-                 * resizing and the content had not settled into it yet.
+                 * Avoid permanent FBO layer and MultiEffect on the entire content clip.
+                 * Offscreen layer rasterization causes significant blurriness / fuzziness
+                 * on fractional display scaling (e.g. 1.25x), disables native subpixel font hinting,
+                 * and wastes 10-15MB of VRAM with GPU redraw spikes.
+                 * Rectangular clip: true keeps contents neatly bounded within the straight part.
                  */
-                layer.enabled: true
+                layer.enabled: false
                 layer.effect: MultiEffect {
                     maskEnabled: true
                     maskSource: contentShape
