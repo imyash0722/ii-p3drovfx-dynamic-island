@@ -430,8 +430,24 @@ PanelWindow {
         return !CF.WallpaperFraming.isIdentity(WallpaperLayout.framingFor(name, path))
             || Math.abs(WallpaperLayout.angleFor(name, path) % 360) > 0.001;
     }
+    // Same plane as BackgroundRoot.framedVerticalSweep: vertical parallax on a
+    // framed picture travels the picture's whole height.
+    readonly property real framedPictureAspect: CF.WallpaperFraming.isSideways(WallpaperLayout.angleFor(bgWidgetsWindow.editScreenName, bgWidgetsWindow.framingSourcePath))
+        ? wallpaperWidth / Math.max(1, wallpaperHeight)
+        : wallpaperHeight / Math.max(1, wallpaperWidth)
+    readonly property bool framedVerticalSweep: {
+        if (!bgWidgetsWindow.wallpaperFramed || bgWidgetsWindow.videoEffectsDisabled
+                || WallpaperLayout.centeringFor(bgWidgetsWindow.editScreenName, bgWidgetsWindow.framingSourcePath) > 0.001)
+            return false;
+        const p = Config.options.background.parallax;
+        if (!p.enableWorkspace || wallpaperWidth <= 0 || wallpaperHeight <= 0)
+            return false;
+        return p.vertical || (p.autoVertical && bgWidgetsWindow.framedPictureAspect > 1);
+    }
     readonly property real wallpaperBoxWidth: bgWidgetsWindow.wallpaperFramed ? screen.width : wallpaperWidth
-    readonly property real wallpaperBoxHeight: bgWidgetsWindow.wallpaperFramed ? screen.height : wallpaperHeight
+    readonly property real wallpaperBoxHeight: !bgWidgetsWindow.wallpaperFramed ? wallpaperHeight
+        : bgWidgetsWindow.framedVerticalSweep ? Math.max(screen.height, screen.width * bgWidgetsWindow.framedPictureAspect)
+        : screen.height
     property bool wallpaperIsVideo: {
         if (bgWidgetsWindow.ownWallpaperPath !== "")
             return false;
@@ -801,6 +817,33 @@ PanelWindow {
             id: desktopStack
             anchors.fill: parent
             opacity: (1 - bgWidgetsWindow.windowBlurProgress) * (1 - bgWidgetsWindow.scrollingOverviewHide)
+
+            // The canvas is a screen-sized MouseArea moved by the widgets'
+            // parallax, so a long travel (a tall picture's vertical sweep) pulls
+            // it off a strip of the screen. Behind it, fixed to the screen,
+            // this keeps the desktop menu reachable on that strip.
+            MouseArea {
+                anchors.fill: parent
+                z: -1
+                visible: widgetCanvas.visible && widgetCanvas.enabled
+                // Filtered by hand: the TapHandler below widens acceptedButtons.
+                acceptedButtons: Qt.RightButton
+                onClicked: mouse => {
+                    if (mouse.button !== Qt.RightButton)
+                        return;
+                    const p = mapToItem(null, mouse.x, mouse.y);
+                    GlobalStates.openDesktopMenu(bgWidgetsWindow.editScreenName, p.x, p.y);
+                }
+                TapHandler {
+                    id: desktopStripLongPress
+                    gesturePolicy: TapHandler.WithinBounds
+                    onLongPressed: {
+                        const pos = desktopStripLongPress.point.position;
+                        const p = desktopStripLongPress.parent.mapToItem(null, pos.x, pos.y);
+                        GlobalStates.openDesktopMenu(bgWidgetsWindow.editScreenName, p.x, p.y);
+                    }
+                }
+            }
         }
 
         Loader {

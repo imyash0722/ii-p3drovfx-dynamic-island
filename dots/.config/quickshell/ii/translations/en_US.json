@@ -1370,7 +1370,7 @@
     "Format JSON": "Format JSON",
     "Circular Media": "Circular Media",
     "Invalid service. Use: unsplash or wallhaven": "Invalid service. Use: unsplash or wallhaven",
-    "Attempt to remove dupes (the aggregator playerctl one and browsers' native ones when there's plasma browser integration)": "Attempt to remove dupes (the aggregator playerctl one and browsers' native ones when there's plasma browser integration)",
+    "Hide duplicate and empty players: the playerctld aggregator, players with no track and no controls, and native browser players repeating a Plasma Browser Integration one. Electron apps register as \"chromium\" but are only hidden when they repeat it.": "Hide duplicate and empty players: the playerctld aggregator, players with no track and no controls, and native browser players repeating a Plasma Browser Integration one. Electron apps register as \"chromium\" but are only hidden when they repeat it.",
     "1x1 notes widget with vertical scroll and direct notes editor.": "1x1 notes widget with vertical scroll and direct notes editor.",
     "On": "On",
     "Top left": "Top left",
@@ -15233,5 +15233,9 @@
     "Vault": "Vault",
     "Vault locked": "Vault locked",
     "Wrong master password": "Wrong master password",
-    "Sign in once from a terminal — US, EU or self-hosted": "Sign in once from a terminal — US, EU or self-hosted"
+    "Sign in once from a terminal — US, EU or self-hosted": "Sign in once from a terminal — US, EU or self-hosted",
+    "Close media controls": "Close media controls",
+    "Open media controls": "Open media controls",
+    "Square media widget": "Square media widget",
+    "Draw the media widget as one square slot: the cover with a play/pause badge. Vertical docks always draw it this way": "Draw the media widget as one square slot: the cover with a play/pause badge. Vertical docks always draw it this way"
 }
