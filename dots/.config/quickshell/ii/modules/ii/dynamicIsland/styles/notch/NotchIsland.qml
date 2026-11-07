@@ -2468,15 +2468,17 @@ Scope {
                     else if (root.usingWrappedFrame)
                         shown += Config.options.appearance.wrappedFrameThickness;
                     const away = -container.height - 10;
+                    const hFactor = Math.max(1, container.height / Math.max(1, Appearance.sizes.barHeight));
                     if (root.centerInBar)
-                        return shown - root.barHiddenAmount;
+                        return shown - root.barHiddenAmount * hFactor;
                     return root.hidden ? away : shown;
                 }
                 if (root.centerInBar) {
                     let shown = 0;
                     if (root.usingWrappedFrame)
                         shown += Config.options.appearance.wrappedFrameThickness;
-                    return shown - root.barHiddenAmount;
+                    const hFactor = Math.max(1, container.height / Math.max(1, Appearance.sizes.barHeight));
+                    return shown - root.barHiddenAmount * hFactor;
                 }
                 if (root.hidden && !root.centerInBar)
                     return -root.targetHeight - 10;

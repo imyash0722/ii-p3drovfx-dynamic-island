@@ -176,7 +176,7 @@ Scope {
                         target: hoverRegion
                         function onContainsMouseChanged() {
                             if (hoverRegion.containsMouse) {
-                                if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen) {
+                                if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow) {
                                     barRoot.hoverTriggered = true;
                                 } else {
                                     hoverOpenTimer.restart();

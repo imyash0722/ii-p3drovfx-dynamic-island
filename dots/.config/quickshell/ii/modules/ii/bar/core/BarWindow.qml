@@ -217,7 +217,7 @@ Scope {
                 GlobalStates.reportTopShellHover(screenKey, hoverRegion.containsMouse);
                 if (hoverRegion.containsMouse) {
                     hoverCloseTimer.stop();
-                    if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen) {
+                    if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow) {
                         barRoot.hoverTriggered = true;
                     } else {
                         hoverOpenTimer.restart();
@@ -230,7 +230,7 @@ Scope {
         }
 
         property bool superShow: false
-        readonly property bool localBarRevealed: hoverTriggered || superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
+        readonly property bool localBarRevealed: hoverTriggered || superShow || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
         onLocalBarRevealedChanged: {
             if (BarInteraction.isIslandInBarCenter) {
                 GlobalStates.barInBarRevealed = localBarRevealed;
