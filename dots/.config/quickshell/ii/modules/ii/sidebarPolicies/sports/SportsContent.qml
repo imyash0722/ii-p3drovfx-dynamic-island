@@ -49,7 +49,7 @@ Item {
                 }
 
                 StyledText {
-                    text: SportsService.lastUpdated ? Translation.tr("Updated ") + SportsService.lastUpdated : Translation.tr("Live Tracker")
+                    text: SportsTrackerService.lastUpdated ? Translation.tr("Updated ") + SportsTrackerService.lastUpdated : Translation.tr("Live Tracker")
                     font.pixelSize: Appearance.font.pixelSize.smallest
                     color: Appearance.colors.colOnSurfaceVariant
                 }
@@ -64,7 +64,7 @@ Item {
                 colBackgroundHover: Appearance.colors.colLayer2
                 borderWidth: 1
                 borderColor: Appearance.colors.colOutlineVariant
-                onPressed: SportsService.refresh()
+                onPressed: SportsTrackerService.refresh()
 
                 MaterialSymbol {
                     id: refreshGlyph
@@ -74,7 +74,7 @@ Item {
                     color: Appearance.colors.colOnSurfaceVariant
 
                     RotationAnimation on rotation {
-                        running: SportsService.isRefreshing
+                        running: SportsTrackerService.isRefreshing
                         loops: Animation.Infinite
                         from: 0
                         to: 360
@@ -164,14 +164,14 @@ Item {
                         }
 
                         StyledText {
-                            text: SportsService.cricketMatches.length > 0 ? (SportsService.cricketMatches.length + " matches") : ""
+                            text: SportsTrackerService.cricketMatches.length > 0 ? (SportsTrackerService.cricketMatches.length + " matches") : ""
                             font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnSurfaceVariant
                         }
                     }
 
                     Repeater {
-                        model: SportsService.cricketMatches
+                        model: SportsTrackerService.cricketMatches
                         delegate: CricketCard {
                             required property var modelData
                             Layout.fillWidth: true
@@ -180,7 +180,7 @@ Item {
                     }
 
                     Rectangle {
-                        visible: SportsService.cricketMatches.length === 0
+                        visible: SportsTrackerService.cricketMatches.length === 0
                         Layout.fillWidth: true
                         implicitHeight: 60
                         color: Appearance.colors.colLayer1

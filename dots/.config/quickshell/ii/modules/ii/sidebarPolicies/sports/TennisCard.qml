@@ -7,9 +7,9 @@ import qs.services
 Rectangle {
     id: root
 
-    readonly property var favorites: SportsService.tennisFavorites || []
-    readonly property var rankings: SportsService.tennisRankings || []
-    readonly property var matches: SportsService.tennisMatches || []
+    readonly property var favorites: SportsTrackerService.tennisFavorites || []
+    readonly property var rankings: SportsTrackerService.tennisRankings || []
+    readonly property var matches: SportsTrackerService.tennisMatches || []
     readonly property bool hasLiveMatch: matches.length > 0 && matches.some(m => m.is_live)
 
     color: Appearance.colors.colLayer1

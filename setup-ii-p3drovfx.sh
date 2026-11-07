@@ -189,7 +189,7 @@ PROTECTED_PATTERNS=(
     "modules/common/widgets/NotificationAppIcon.qml"
     "services/ShellUpdates.qml"
     "services/CpuModeService.qml"
-    "services/SportsService.qml"
+    "services/SportsTrackerService.qml"
     "scripts/sports/*"
     "modules/ii/sidebarPolicies/sports/*"
     "modules/ii/bar/widgets/agy/*"

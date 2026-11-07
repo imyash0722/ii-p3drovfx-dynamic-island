@@ -7,9 +7,9 @@ import qs.services
 Rectangle {
     id: root
 
-    readonly property var nextRace: SportsService.f1NextRace
-    readonly property var drivers: SportsService.f1DriverStandings || []
-    readonly property var constructors: SportsService.f1ConstructorStandings || []
+    readonly property var nextRace: SportsTrackerService.f1NextRace
+    readonly property var drivers: SportsTrackerService.f1DriverStandings || []
+    readonly property var constructors: SportsTrackerService.f1ConstructorStandings || []
 
     color: Appearance.colors.colLayer1
     radius: Appearance.rounding.normal
