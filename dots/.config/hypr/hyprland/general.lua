@@ -64,7 +64,7 @@ hl.config({
             special = true,
             new_optimizations = true,
             size = 10,
-            passes = 3,
+            passes = 2,
             brightness = 1,
             noise = 0.05,
             contrast = 0.89,
@@ -275,7 +275,7 @@ hl.config({
     misc = {
         disable_hyprland_logo = true,
         disable_splash_rendering = true,
-        vrr = 0,
+        vrr = 1,
         mouse_move_enables_dpms = true,
         key_press_enables_dpms = true,
         animate_manual_resizes = false,
@@ -289,6 +289,10 @@ hl.config({
         focus_on_activate = true
     },
 
+    render = {
+        direct_scanout = 1
+    },
+
     binds = {
         scroll_event_delay = 0,
         hide_special_on_workspace_change = true
@@ -299,7 +303,7 @@ hl.config({
         zoom_rigid = false,
         zoom_disable_aa = true,
         hotspot_padding = 1,
-        no_hardware_cursors = true
+        no_hardware_cursors = false
     },
 
     xwayland = {
