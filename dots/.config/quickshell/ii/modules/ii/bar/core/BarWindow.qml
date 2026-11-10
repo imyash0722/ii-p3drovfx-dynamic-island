@@ -237,8 +237,8 @@ Scope {
             }
         }
         property bool mustShow: localBarRevealed
-            || (BarInteraction.isIslandInBarCenter && (GlobalStates.islandInBarRevealed || GlobalStates.topShellRevealed))
-            || (!BarInteraction.isIslandInBarCenter && GlobalStates.topShellRevealed)
+            || (BarInteraction.isIslandInBarCenter && (GlobalStates.islandInBarRevealed || (GlobalStates.topShellRevealed && GlobalStates.topShellHovered)))
+            || (!BarInteraction.isIslandInBarCenter && (GlobalStates.topShellRevealed && GlobalStates.topShellHovered))
         // BarInteraction, not the stored flag: a touch-first family forces auto-hide off
         // without rewriting the preference the user has saved.
         property real hiddenAmount: (BarInteraction.autoHide && !mustShow) ? Appearance.sizes.barHeight : 0
