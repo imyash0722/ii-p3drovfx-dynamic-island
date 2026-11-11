@@ -19,7 +19,7 @@ Singleton {
     property string syntaxHighlightingTheme
 
     readonly property int windowRounding: {
-        if (Config.options?.appearance?.windowRounding !== undefined)
+        if (Config.options?.appearance?.windowRounding !== undefined && Config.options.appearance.windowRounding >= 0)
             return Config.options.appearance.windowRounding;
         let rv = Config.options.appearance.roundingValue;
         if (rv <= 0)

@@ -3101,7 +3101,7 @@ Singleton {
                 property string globalRounding: "large" // Legacy — migrated to roundingValue via onLoaded
                 property int roundingValue: 28 // -1 = not yet migrated, 0-48 = active slider value (default 24 after migration)
                 property int defaultBorderRadius: 18
-                property int windowRounding: 0
+                property int windowRounding: -1 // -1 = inherit from global roundingValue, >=0 = explicit window rounding
                 property bool toggleWindowRounding: true // Changes Hyprland window rounding to 0 if sharpMode is true
                 property real iconTintPercentage: 0.6
                 property JsonObject fonts: JsonObject {

@@ -109,7 +109,9 @@ Item {
                 usePercentTooltip: false
                 badgeText: Math.round(value) === 0 ? Translation.tr("Square (0 px)") : `${Math.round(value)} px`
                 tooltipContent: badgeText
-                value: windowsRoot.appearance.windowRounding ?? 0
+                value: (windowsRoot.appearance.windowRounding !== undefined && windowsRoot.appearance.windowRounding >= 0)
+                    ? windowsRoot.appearance.windowRounding
+                    : Appearance.windowRounding
                 onMoved: windowsRoot.appearance.windowRounding = Math.round(value)
             }
 
