@@ -2365,8 +2365,8 @@ Scope {
                 bodyWidth: notchBody.bodyWidth * container.scale
                 bodyHeight: notchBody.height * container.scale
                 bodyRadius: notchBody.bodyRadius * container.scale
-                reservedRight: container.x + container.width / 2 + IslandGeometry.centerWidth / 2
-                reservedLeft: container.x + container.width / 2 - IslandGeometry.centerWidth / 2
+                reservedRight: (container.x || 0) + (container.width || 0) / 2 + (IslandGeometry.centerWidth || 0) / 2
+                reservedLeft: (container.x || 0) + (container.width || 0) / 2 - (IslandGeometry.centerWidth || 0) / 2
                 surfaceColor: notchBody.color
                 shadowEnabled: notchBody.layer.enabled
                 cutAtEdge: root.sculptedFlare

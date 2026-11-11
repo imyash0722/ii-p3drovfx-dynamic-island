@@ -143,7 +143,7 @@ build_one() {
         printf 'rust-helpers: cargo is not installed\n' >&2
         return 1
     }
-    ( cd "$src" && cargo build --release ) || return 1
+    ( cd "$src" && CARGO_TARGET_DIR="$src/target" cargo build --release ) || return 1
     # Installed through a rename: the previous helper is usually still running,
     # and writing over a running executable is ETXTBSY — cp fails and throws
     # away a compile that worked. A rename leaves it on the old inode.
