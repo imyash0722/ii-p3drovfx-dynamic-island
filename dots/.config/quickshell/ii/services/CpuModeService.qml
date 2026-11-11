@@ -86,6 +86,32 @@ Singleton {
         onTriggered: stateFile.reload()
     }
 
+    // Auto-switch to the highest profile (coding) while on AC power, and
+    // restore the previous mode when unplugged.
+    property string modeBeforeAc: ""
+    readonly property bool onAcPower: Battery.available && Battery.onAc
+
+    function applyPowerSource(initial) {
+        if (root.onAcPower) {
+            if (root.currentIndex !== 2) {
+                if (!initial) root.modeBeforeAc = root.currentMode;
+                root.setMode("coding");
+            }
+        } else if (root.modeBeforeAc.length > 0) {
+            root.setMode(root.modeBeforeAc);
+            root.modeBeforeAc = "";
+        }
+    }
+
+    onOnAcPowerChanged: applyPowerSource(false)
+
+    Timer {
+        id: startupApply
+        interval: 3000
+        running: true
+        onTriggered: root.applyPowerSource(true)
+    }
+
     Component.onCompleted: {
         stateFile.reload();
     }
