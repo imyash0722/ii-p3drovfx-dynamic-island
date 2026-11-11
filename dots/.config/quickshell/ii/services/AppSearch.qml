@@ -24,7 +24,11 @@ Singleton {
             "wpsoffice": "wps-office2019-kprometheus",
             "footclient": "foot",
             "jetbrains-studio": "android-studio",
-            "zen": "zen-browser"
+            "zen": "zen-browser",
+            "whatsapp": "whatsapp",
+            "whatsapp desktop": "whatsapp",
+            "whatsapp-desktop": "whatsapp",
+            "whatsapp-linux-desktop": "whatsapp"
         })
     property var regexSubstitutions: [
         {
@@ -301,6 +305,10 @@ Singleton {
         if (str.includes("zed")) {
             if (iconExists("dev.zed.Zed")) return "dev.zed.Zed";
             if (iconExists("zed")) return "zed";
+        }
+        if (str.toLowerCase().includes("whatsapp")) {
+            if (iconExists("whatsapp-desktop")) return "whatsapp-desktop";
+            if (iconExists("whatsapp")) return "whatsapp";
         }
 
         // Try to see if there's a themed icon matching the name (for absolute path icons)

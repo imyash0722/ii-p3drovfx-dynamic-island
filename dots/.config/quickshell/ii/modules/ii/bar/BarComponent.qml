@@ -17,6 +17,7 @@ import qs.modules.ii.bar.widgets.clock
 import qs.modules.ii.bar.widgets.media
 import qs.modules.ii.bar.widgets.battery
 import qs.modules.ii.bar.widgets.bluetooth
+import qs.modules.ii.bar.widgets.network
 import qs.modules.ii.bar.widgets.resources
 import qs.modules.ii.bar.widgets.keyboard
 import qs.modules.ii.bar.widgets.tray
@@ -34,6 +35,7 @@ import qs.modules.ii.bar.widgets.passwordManager
 import qs.modules.ii.bar.widgets.networkSpeed
 import qs.modules.ii.bar.widgets.privacy
 import qs.modules.ii.bar.widgets.aiPlanUsage
+import qs.modules.ii.bar.widgets.agy
 import "widgets/search"
 import "widgets/date"
 
@@ -618,6 +620,8 @@ Item {
             return true;
         if (modelData.id === "power" && Config.options.bar.styles.power !== "default")
             return true;
+        if (modelData.id === "agy_launcher" && Config.options.bar.styles.agyLauncher !== "default")
+            return true;
         if (modelData.id === "battery" && Config.options.bar.styles.battery === "expressive")
             return true;
         if (modelData.id === "system_tray" && Config.options.bar.styles.systray === "expressive")
@@ -886,6 +890,8 @@ Item {
             if (isExp)
                 return isVert ? dashboardPanelButtonExpressiveVert : dashboardPanelButtonExpressive;
             return isVert ? dashboardPanelButtonVert : dashboardPanelButton;
+        case "network":
+            return networkComp;
         case "bluetooth_devices":
             if (isExp)
                 return bluetoothCompExpressive;
@@ -904,6 +910,12 @@ Item {
             if (isExp)
                 return powerCompExpressive;
             return powerComp;
+        case "agy_launcher":
+            if (style === "solid")
+                return agyLauncherCompSolid;
+            if (isExp)
+                return agyLauncherCompExpressive;
+            return agyLauncherComp;
         case "network_speed":
             if (isExp)
                 return networkSpeedCompExpressive;
@@ -1277,6 +1289,12 @@ Item {
         }
     }
     Component {
+        id: networkComp
+        NetworkWidget {
+            vertical: rootItem.vertical
+        }
+    }
+    Component {
         id: bluetoothComp
         BluetoothDevicesWidget {
             vertical: rootItem.vertical
@@ -1573,6 +1591,24 @@ Item {
     Component {
         id: powerCompExpressive
         ExpressivePowerButton {
+            vertical: rootItem.vertical
+        }
+    }
+    Component {
+        id: agyLauncherComp
+        AgyBarButton {
+            vertical: rootItem.vertical
+        }
+    }
+    Component {
+        id: agyLauncherCompSolid
+        SolidAgyBarButton {
+            vertical: rootItem.vertical
+        }
+    }
+    Component {
+        id: agyLauncherCompExpressive
+        ExpressiveAgyBarButton {
             vertical: rootItem.vertical
         }
     }

@@ -8,6 +8,7 @@ import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 import Qt.labs.synchronizer
 import qs.modules.common.functions
+import qs.modules.common.dashboardWidgets.todo
 import "phone"
 import "sports"
 
@@ -134,49 +135,19 @@ Item {
     property bool animeCloset: Config.options.policies.weeb === 2
     property bool ankiEnabled: Config.options.policies.anki !== 0
 
-    // Tab and Page mapping
+    // Tab and Page mapping - To Do, Media, and Sports
     property var tabs: [
         {
-            icon: "neurology",
-            name: Translation.tr("Intelligence"),
-            enabled: root.aiChatEnabled,
-            component: aiChat
-        },
-        {
-            icon: "translate",
-            name: Translation.tr("Translator"),
-            enabled: root.translatorEnabled,
-            component: translator
+            icon: "checklist",
+            name: Translation.tr("To Do"),
+            enabled: true,
+            component: todoList
         },
         {
             icon: "music_note",
             name: Translation.tr("Media"),
-            enabled: root.mediaEnabled,
+            enabled: true,
             component: media
-        },
-        {
-            icon: "wallpaper",
-            name: Translation.tr("Wallpapers"),
-            enabled: root.wallpapersEnabled,
-            component: wallpaperBrowser
-        },
-        {
-            icon: "bookmark_heart",
-            name: Translation.tr("Anime"),
-            enabled: root.animeEnabled && !root.animeCloset,
-            component: anime
-        },
-        {
-            icon: "school",
-            name: Translation.tr("Anki"),
-            enabled: root.ankiEnabled,
-            component: ankiStudy
-        },
-        {
-            icon: "smartphone",
-            name: Translation.tr("Phone"),
-            enabled: Config.options.policies.phone !== 0,
-            component: phonePlaceholder
         },
         {
             icon: "sports_and_outdoors",
@@ -631,8 +602,21 @@ Item {
             Translator {}
         }
         Component {
+            id: todoList
+            Item {
+                TodoWidget {
+                    anchors.fill: parent
+                    keyboardEnabled: root.visible && swipeView.currentIndex === 0
+                }
+            }
+        }
+        Component {
             id: media
             SidebarPlayerControl {}
+        }
+        Component {
+            id: sportsTab
+            SportsContent {}
         }
         Component {
             id: wallpaperBrowser

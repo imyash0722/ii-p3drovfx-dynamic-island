@@ -26,6 +26,9 @@ Singleton {
     property string activeCommit: ""
     property string remoteCommit: ""
 
+    // Local checkout path when deployed via --local (non-empty means update must pass --local)
+    property string activeLocalPath: ""
+
     // How far the remote branch is ahead of the local checkout. 0 means
     // "unknown" as much as "level": the count comes from the GitHub compare
     // API, which is unavailable for other hosts, offline, or rate-limited.
@@ -122,8 +125,6 @@ Singleton {
     // Display name for a fork preset id; a custom remote shows its repo slug.
     function forkLabel(fork) {
         switch (fork) {
-        case "dynamic-island":
-            return "ii-p3drovfx-dynamic-island";
         case "p3drovfx":
         case "mine":
             return "II-P3DROVFX";
@@ -201,13 +202,17 @@ Singleton {
     // Refresh the active fork and branch. The script asks before applying, so
     // the terminal is the confirmation; config.json is kept.
     function launchUpdate() {
-        root.launchInTerminal(["update", "--keep-config", root.hyprFlag()]);
+        const args = ["update", "--keep-config", root.hyprFlag()];
+        if (root.activeLocalPath !== "") args.push("--local", root.activeLocalPath);
+        root.launchInTerminal(args);
     }
 
     // The same update, but always installing the fork's Hyprland files: for a page that
     // needs them, whatever the update setting says. The script backs up what it replaces.
     function launchHyprInstall() {
-        root.launchInTerminal(["update", "--keep-config", "--hypr"]);
+        const args = ["update", "--keep-config", "--hypr"];
+        if (root.activeLocalPath !== "") args.push("--local", root.activeLocalPath);
+        root.launchInTerminal(args);
     }
 
     // Move to another branch of the current fork. Confirmed in Settings first,
@@ -268,7 +273,7 @@ Singleton {
 
     Process {
         id: stateReadProc
-        command: ["bash", "-c", 'dir="$1"; out=""; ' + 'for f in .active-remote .active-branch .active-fork .active-commit; do ' + '[ -f "$dir/$f" ] && out+="$(cat "$dir/$f")"; out+="---"; done; ' + 'printf %s "$out"', "ii-state-read", root.stateDir]
+        command: ["bash", "-c", 'dir="$1"; out=""; ' + 'for f in .active-remote .active-branch .active-fork .active-commit .active-local; do ' + '[ -f "$dir/$f" ] && out+="$(cat "$dir/$f")"; out+="---"; done; ' + 'printf %s "$out"', "ii-state-read", root.stateDir]
         stdout: StdioCollector {
             onStreamFinished: {
                 const parts = text.split("---");
@@ -276,13 +281,9 @@ Singleton {
                 root.activeBranch = (parts[1] ?? "").trim() || "main";
                 root.activeFork = (parts[2] ?? "").trim() || "p3drovfx";
                 root.activeCommit = (parts[3] ?? "").trim();
+                root.activeLocalPath = (parts[4] ?? "").trim();
 
-                if (!root._probeAfterState) {
-                    if (root.activeCommit !== "" && root.remoteCommit !== "" && root.activeCommit !== root.remoteCommit) {
-                        root.refresh();
-                    }
-                    return;
-                }
+                if (!root._probeAfterState) return;
                 root._probeAfterState = false;
                 if (root.activeRemote === "" || root.activeCommit === "") {
                     root._finishCheck();
@@ -295,10 +296,6 @@ Singleton {
 
     Process {
         id: remoteHeadProc
-        // git aborts before touching the network when its cwd is gone, which
-        // the shell's own may be if it was started from a since-deleted temp
-        // dir; an empty answer would then read as an unreachable remote.
-        workingDirectory: root.stateDir
         command: ["bash", "-c", 'git ls-remote --heads "$1" "$2" 2>/dev/null | awk \'{print $1; exit}\'', "ii-remote-head", root.activeRemote, root.activeBranch]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -364,7 +361,7 @@ Singleton {
         path: `${root.stateDir}/.active-commit`
         watchChanges: true
         printErrors: false
-        onFileChanged: root.refresh()
+        onFileChanged: root.reloadState()
     }
 
     // A QML live-reload re-creates this singleton, so a plain timer would spend a

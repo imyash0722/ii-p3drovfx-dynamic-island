@@ -574,6 +574,29 @@ Singleton {
             pageId: "power"
         },
         {
+            id: "agy_launcher",
+            icon: "auto_awesome",
+            title: "Antigravity CLI",
+            styleConfigKey: "agyLauncher",
+            styleOptions: [
+                {
+                    displayName: qsTr("Default"),
+                    icon: "style",
+                    value: "default"
+                },
+                {
+                    displayName: qsTr("Expressive"),
+                    icon: "fluid_med",
+                    value: "expressive"
+                },
+                {
+                    displayName: qsTr("Solid"),
+                    icon: "radio_button_checked",
+                    value: "solid"
+                }
+            ]
+        },
+        {
             id: "dock_to_panel",
             icon: "apps",
             title: "Dock to Panel",

@@ -176,7 +176,7 @@ Scope {
                         target: hoverRegion
                         function onContainsMouseChanged() {
                             if (hoverRegion.containsMouse) {
-                                if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen) {
+                                if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow) {
                                     barRoot.hoverTriggered = true;
                                 } else {
                                     hoverOpenTimer.restart();
@@ -189,7 +189,7 @@ Scope {
                     }
 
                     property bool superShow: false
-                    property bool mustShow: hoverTriggered || superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
+                    property bool mustShow: hoverTriggered || superShow || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
                     property real hiddenAmount: (Config.options.bar.autoHide.enable && !mustShow) ? Appearance.sizes.verticalBarWindowWidth : 0
                     Behavior on hiddenAmount {
                         animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(barRoot)

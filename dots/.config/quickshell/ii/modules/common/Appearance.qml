@@ -19,6 +19,8 @@ Singleton {
     property string syntaxHighlightingTheme
 
     readonly property int windowRounding: {
+        if (Config.options?.appearance?.windowRounding !== undefined)
+            return Config.options.appearance.windowRounding;
         let rv = Config.options.appearance.roundingValue;
         if (rv <= 0)
             return 0;
@@ -1173,7 +1175,7 @@ Singleton {
         property real wallpaperSelectorSortDialogWidth: 280
         property real wallpaperSelectorItemMargins: 8
         property real wallpaperSelectorItemPadding: 6
-        property int dockButtonSize: Math.round((Config.options?.dock.height ?? 60) * 0.85)
+        property int dockButtonSize: Math.round((Config.options?.dock.height ?? 60) * 0.68)
     }
 
     syntaxHighlightingTheme: root.m3colors.darkmode ? "Monokai" : "ayu Light"

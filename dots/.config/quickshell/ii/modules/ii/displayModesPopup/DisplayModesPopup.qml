@@ -70,16 +70,22 @@ Scope {
     property var knownOutputs: null
 
     Process {
+        id: recoverEdpProc
+        command: ["bash", "-c", "hyprmon ensure-internal"]
+    }
+
+    Process {
         id: outputsProc
         command: ["hyprctl", "monitors", "all", "-j"]
         stdout: StdioCollector {
             onStreamFinished: {
-                let names = [];
+                let monitors = [];
                 try {
-                    names = JSON.parse(this.text).map(m => m.name);
+                    monitors = JSON.parse(this.text);
                 } catch (e) {
                     return;
                 }
+                const names = monitors.map(m => m.name);
                 const previous = root.knownOutputs;
                 root.knownOutputs = names;
                 if (previous === null)
@@ -87,6 +93,16 @@ Scope {
                 const added = names.some(n => previous.indexOf(n) === -1);
                 if (added && root.enabled && Config.options.bar.tooltips.displayModesOnHotplug)
                     GlobalStates.displayModesPopupOpen = true;
+
+                const removed = previous.some(n => names.indexOf(n) === -1);
+                if (removed) {
+                    GlobalStates.displayModesPopupOpen = false;
+                    const activeCount = monitors.filter(m => !m.disabled).length;
+                    // Only emergency recover internal display if all active displays were disconnected
+                    if (activeCount === 0) {
+                        recoverEdpProc.running = true;
+                    }
+                }
             }
         }
     }

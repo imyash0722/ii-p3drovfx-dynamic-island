@@ -15,10 +15,17 @@ Singleton {
         // dummy to force init
     }
 
+    Timer {
+        id: checkTimer
+        interval: 500
+        repeat: false
+        onTriggered: checkConflictsProc.running = true
+    }
+
     Connections {
         target: Config
         function onReadyChanged() {
-            if (Config.ready) checkConflictsProc.running = true
+            if (Config.ready) checkTimer.restart()
         }
     }
 

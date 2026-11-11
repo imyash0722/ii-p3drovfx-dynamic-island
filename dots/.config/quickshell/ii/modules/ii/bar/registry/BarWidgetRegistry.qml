@@ -21,11 +21,13 @@ QtObject {
             case "system_monitor":         return s.resources    ?? "default";
             case "policies_panel_button":  return s.policies     ?? "default";
             case "power":                  return s.power        ?? "default";
+            case "agy_launcher":          return s.agyLauncher ?? "solid";
             case "battery": {
                 const b = s.battery ?? "default";
                 return b === "classic" ? "default" : b;
             }
             case "system_tray":            return s.systray      ?? "default";
+            case "network":                return s.network      ?? "default";
             case "bluetooth_devices": {
                 const bt = s.bluetooth ?? "default";
                 return bt === "classic" ? "default" : bt;

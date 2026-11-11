@@ -408,7 +408,7 @@ Singleton {
     // under a new id). None of that is a user action. Sources that infer an event from
     // state must stay silent here; sources with a real cause - a hook, a genuinely new
     // clipboard entry - are unaffected.
-    readonly property int quietWindowMs: (root.modern && root.modern.behavior && root.modern.behavior.quietWindowMs) ? root.modern.behavior.quietWindowMs : 1200
+    readonly property int quietWindowMs: Math.max(4000, (root.modern && root.modern.behavior && root.modern.behavior.quietWindowMs) ? root.modern.behavior.quietWindowMs : 1200)
     property bool quietWindowActive: true
 
     function beginQuietWindow() {

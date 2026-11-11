@@ -166,3 +166,36 @@ else
         end
     end
 end
+
+-- Automatically attach searchToggleReleaseInterrupt to every Super key combo
+-- so that releasing Super only toggles the overview when tapped alone,
+-- and never when executing combinations like Super+Shift+S, Super+Return, Super+Q, etc.
+do
+    if not hl._orig_bind then
+        hl._orig_bind = hl.bind
+    end
+    local orig_bind = hl._orig_bind
+    local cancel_interrupt = hl.dsp.global("quickshell:searchToggleReleaseInterrupt")
+    local interrupted_keys = {}
+
+    local function is_super_combo(norm)
+        if not norm:find("SUPER") then return false end
+        if norm == "SUPER+SUPER_L" or norm == "SUPER+SUPER_R" or norm == "SUPER_L" or norm == "SUPER_R" then
+            return false
+        end
+        return true
+    end
+
+    hl.bind = function(key, disp, opts)
+        if type(key) == "string" then
+            local norm = key:gsub("%s+", "")
+            if is_super_combo(norm) and not interrupted_keys[norm] then
+                interrupted_keys[norm] = true
+                orig_bind(key, cancel_interrupt)
+            end
+        end
+        return orig_bind(key, disp, opts)
+    end
+
+    orig_bind("SUPER + catchall", cancel_interrupt, { transparent = true, ignore_mods = true })
+end
