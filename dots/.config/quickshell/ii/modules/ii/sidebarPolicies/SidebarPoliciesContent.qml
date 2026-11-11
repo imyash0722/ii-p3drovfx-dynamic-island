@@ -635,10 +635,6 @@ Item {
             Phone {}
         }
         Component {
-            id: sportsTab
-            SportsContent {}
-        }
-        Component {
             id: placeholder
             Item {
                 StyledText {
