@@ -149,3 +149,46 @@ Dedicated Python contract tests have been introduced under `scripts/tests/`:
    - Verifies strict regex validation, image fallback, and container clipping.
 4. `test_dock_island_bar_reclaim_contract.py`:
    - Verifies layout and geometry recovery for dock and island placements.
+5. `test_fn_keys_and_touchpad_contract.py`:
+   - Verifies touchpad toggle and on/off binds remain active and bound to `touchpad-toggle.sh`.
+   - Verifies `ignore_mods = true` and `locked = true` on audio mute, mic mute, volume up/down, and media keys so keyboard locks (NumLock) or firmware modifiers never drop keystrokes.
+
+---
+
+## 8. Fn Keys & Touchpad Hardware Key Preservation
+
+### Overview
+Upstream commit `3b9eda7b5` commented out default touchpad bindings (`XF86TouchpadToggle`, `XF86TouchpadOn`, `XF86TouchpadOff`), which broke laptop touchpad toggle keys for downstreams. Additionally, multimedia and mute keys (`XF86AudioMute`, `XF86AudioMicMute`, `XF86AudioRaiseVolume`, `XF86AudioLowerVolume`) lacked `ignore_mods = true`, causing Hyprland to reject those Fn events whenever devices (such as `ideapad-extra-buttons`, external keyboards, or bluetooth headsets) report active NumLock/modifier states.
+
+### Key Changes
+- **Touchpad Binds Restored**:
+  - Restored `XF86TouchpadToggle`, `XF86TouchpadOn`, and `XF86TouchpadOff` in `dots/.config/hypr/hyprland/keybinds.lua`.
+  - Linked to `hyprScripts .. "/touchpad-toggle.sh"` with `ignore_mods = true`.
+- **Modifier Immunity (`ignore_mods = true`)**:
+  - Added `ignore_mods = true` to `XF86AudioMute`, `XF86AudioMicMute`, `XF86AudioRaiseVolume`, `XF86AudioLowerVolume`, and media playback keys (`XF86AudioPlay`, `XF86AudioPause`, `XF86AudioNext`, `XF86AudioPrev`).
+  - Switched audio mute sink to `@DEFAULT_AUDIO_SINK@` for consistent WirePlumber device targeting.
+- **Hardware Mute LED Synchronization (`volume-mute.sh`)**:
+  - Introduced `volume-mute.sh` to synchronize the laptop motherboard's ALSA Master/Speaker and Capture switches with the default PipeWire sink and source.
+  - Fixes stuck mute/micmute LEDs on Lenovo ThinkBook, ThinkPad, and IdeaPad laptops when audio is playing or muted through Bluetooth headphones or USB devices.
+- **Contract Test Suite**:
+  - Implemented `test_fn_keys_and_touchpad_contract.py` to prevent future upstream merges from disabling or clobbering Fn hardware bindings.
+
+---
+
+## 9. Thermal, Power & Rendering Performance Optimizations
+
+### Overview
+Diagnosed elevated chassis temperatures (CPU hitting 74°C, DDR5 RAM hitting 63.8°C with thermal alarms) and desktop stuttering. The thermal issue was rooted in `power-profiles-daemon` locking AMD P-state EPP and ACPI `platform_profile` in `performance` mode, preventing idle C-states and causing thermal GPU throttling down to 400 MHz. Concurrently, Hyprland was running software cursor emulation and 3-pass compositor blur on the integrated Radeon 680M APU.
+
+### Key Changes
+- **Power Profile Optimization**:
+  - Switched default power profile to `balanced` (`powerprofilesctl set balanced`), dropping CPU package temperatures by 20°C and DDR5 memory temperatures from 63.8°C to ~40°C.
+- **Hardware Cursor Planes (`cursor.no_hardware_cursors = false`)**:
+  - Switched from CPU-rendered software cursors to hardware KMS cursor planes in `hyprland/general.lua`, eliminating cursor re-render overhead.
+- **Adaptive Sync (`misc.vrr = 1`)**:
+  - Enabled Variable Refresh Rate on the laptop's VRR-capable eDP display (`1920x1200@60Hz`), reducing panel power draw and stutter.
+- **Direct Scanout (`render.direct_scanout = 1`)**:
+  - Enabled direct scanout for fullscreen windows to bypass compositor compositing overhead.
+- **Compositor Blur Fillrate Reduction**:
+  - Reduced default compositor blur passes from 3 to 2 (`decoration.blur.passes = 2`), reducing GPU shader fillrate load by ~35% on the integrated Radeon APU.
+

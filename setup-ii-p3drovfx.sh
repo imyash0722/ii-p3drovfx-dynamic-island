@@ -202,6 +202,7 @@ PROTECTED_PATTERNS=(
     "scripts/touchGestures/touch_gestures"
     "scripts/tray/sni_watcher"
     "scripts/health/health_watch"
+    "scripts/tests/test_fn_keys_and_touchpad_contract.py"
     # What each of those was built from. Carried for the same reason the binaries
     # are: without it every helper reads as "never verified" after every update,
     # and a warning that fires every time is one nobody reads.
@@ -3025,7 +3026,7 @@ cmd_update() {
     if [[ -n "$prev" && -z "$LOCAL_SRC" ]]; then
         ui_fail "Deployed from a local path" "$(tilde "$prev")"
         ui_note "Re-run with the path:  $SCRIPT_SELF update --local $(tilde "$prev")"
-        ui_note "Or go back to a remote: $SCRIPT_SELF fork p3drovfx"
+        ui_note "Or go back to a remote: $SCRIPT_SELF fork dynamic-island"
         exit 1
     fi
 
@@ -3038,7 +3039,7 @@ cmd_update() {
 
     if [[ -z "$url" && -z "$LOCAL_SRC" ]]; then
         ui_fail "Nothing to update" "no .active-remote in $(tilde "$TARGET_DIR")"
-        ui_note "Pick a fork explicitly:  $SCRIPT_SELF fork p3drovfx"
+        ui_note "Pick a fork explicitly:  $SCRIPT_SELF fork dynamic-island"
         exit 1
     fi
     [[ -n "$OPT_BRANCH" ]] && branch="$OPT_BRANCH"
@@ -3072,7 +3073,7 @@ cmd_switch() {
         fork="${rest##*|}"
         if [[ -z "$url" ]] || [[ -n "$(read_local_state)" ]]; then
             ui_fail "No active fork" "no remote recorded in $(tilde "$TARGET_DIR")"
-            ui_note "Pass --fork as well, or run:  $SCRIPT_SELF fork p3drovfx"
+            ui_note "Pass --fork as well, or run:  $SCRIPT_SELF fork dynamic-island"
             exit 1
         fi
     fi

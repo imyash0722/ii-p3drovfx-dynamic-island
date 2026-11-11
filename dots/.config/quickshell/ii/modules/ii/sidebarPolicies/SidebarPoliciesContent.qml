@@ -150,6 +150,7 @@ Item {
             component: media
         },
         {
+        {
             icon: "sports_and_outdoors",
             name: Translation.tr("Sports"),
             enabled: true,
@@ -633,6 +634,10 @@ Item {
         Component {
             id: phonePlaceholder
             Phone {}
+        }
+        Component {
+            id: sportsTab
+            SportsContent {}
         }
         Component {
             id: placeholder

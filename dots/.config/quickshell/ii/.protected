@@ -16,3 +16,7 @@ modules/settings/configs/sections/DynamicIslandModeSection.qml
 modules/common/widgets/NotificationAppIcon.qml
 services/ShellUpdates.qml
 services/CpuModeService.qml
+services/SportsTrackerService.qml
+scripts/sports/*
+modules/ii/sidebarPolicies/sports/*
+scripts/tests/test_fn_keys_and_touchpad_contract.py
