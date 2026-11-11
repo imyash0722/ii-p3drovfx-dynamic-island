@@ -3859,6 +3859,46 @@ Singleton {
                         property bool enableRam: true
                         property bool enableDisk: true
                     }
+                    property JsonObject clock_hour_shape: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property bool showMinutes: true
+                    }
+                    property JsonObject clock_bloom: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property bool filled: false
+                    }
+                    property JsonObject clock_capsule: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property bool showDate: true
+                    }
+                    property JsonObject clock_dome: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property bool showDate: true
+                    }
+                    property JsonObject clock_totem: JsonObject {
+                        property bool enable: false
+                        property string placementStrategy: "free"
+                        property real x: 200
+                        property real y: 200
+                        property int widgetSize: 100
+                        property bool showWeek: true
+                    }
                     property JsonObject clock_type_weight: JsonObject {
                         property bool enable: false
                         property string placementStrategy: "free"
@@ -4924,6 +4964,11 @@ Singleton {
                 // Play a screen-sized copy of videos taller than the screen
                 // (scripts/videos/video-proxy.sh, made once in the background).
                 property bool videoDownscale: true
+                // Low-resolution wallpapers: switchwall.sh offers the Upscayl popup
+                // (services/Upscayl.qml) through a notification. Read from disk by the script.
+                property bool upscaylPrompt: true
+                // Last model picked in the popup (a .param basename in Upscayl's models dir).
+                property string upscaylModel: "upscayl-standard-4x"
                 // Written by switchwall.sh: the file to open for videoPlaybackSource
                 // (its screen-sized copy once one exists).
                 property string videoPlaybackSource: ""
@@ -5522,6 +5567,8 @@ Singleton {
                     property bool disableSongRec: false
                     // Live games of the teams in the bar's sports team filter.
                     property bool disableSports: false
+                    // Phone live notifications relayed by the optional ii tools Android app.
+                    property bool disablePhoneLive: false
                     property bool disableVpn: false
                     // A Discord voice call: the join, then who is talking beside the clock.
                     property bool disableDiscordVoice: false
@@ -5732,13 +5779,20 @@ Singleton {
                             "sport": "soccer"
                         }
                     ]
+                    // Master switch for sports data: off stops every ESPN request
+                    // (bar, dock, lock, island, timetable, search, AI, football page).
+                    property bool apiEnabled: true
                     property string teamFilter: ""
+                    // Teams picked in Settings → APIs → Sports, kept for their crests;
+                    // teamFilter stays the list the service matches against.
+                    property list<var> followedTeams: []
                     property int updateInterval: 60
                     property int maxCardsPopup: 4
                     property int showBeforeHours: 12
                     property int showAfterMinutes: 180
                     property string activeGameId: ""
-                    property list<var> customOrder: []
+                    property bool goalAnimation: true
+                    property bool cardAnimation: true
                 }
                 property list<string> screenList: [] // List of names, like "eDP-1", find out with 'hyprctl monitors' command
                 property bool onlyShowOnSingleMonitor: false
@@ -6085,6 +6139,13 @@ Singleton {
                 // The Search Tools panel as a full-size page. Off by default:
                 // a developer surface most people never open.
                 property bool enableDevTools: false
+                // Football overview: matches, lineups, stats, tables and teams from ESPN.
+                property bool enableFootball: false
+                property JsonObject football: JsonObject {
+                    property list<string> leagues: ["eng.1", "esp.1", "ita.1", "ger.1", "fra.1", "bra.1", "uefa.champions", "conmebol.libertadores"]
+                    property list<var> favoriteTeams: []
+                    property int refreshInterval: 30
+                }
                 property JsonObject fontSize: JsonObject {
                     property int key: Appearance.font.pixelSize.smaller
                     property int comment: Appearance.font.pixelSize.smaller
@@ -6465,10 +6526,26 @@ Singleton {
                     /// Finger travel, in touchpad pixels, that fully opens a tracked surface.
                     property int trackedDistance: 280
                 }
+                /**
+                 * Graphics tablet buttons (OpenTabletDriver) driving shell actions.
+                 * One action id per slot ("keep" = leave the driver's own binding). See
+                 * services/TabletButtons.qml.
+                 */
+                property JsonObject tabletButtons: JsonObject {
+                    property bool enable: false
+                    property list<string> aux: []
+                    property list<string> pen: []
+                    /// Notches per press of a fixed scroll button (repeats while held).
+                    property int scrollStep: 1
+                    /// Drag-to-scroll speed: 1 = one notch per 40 px of pen travel.
+                    property real dragSpeed: 1.0
+                    property bool invertDrag: false
+                }
             }
 
             property JsonObject language: JsonObject {
                 property string ui: "en_US" // UI language. "auto" for system locale, or specific language code like "zh_CN", "en_US"
+                property string aiModel: "gemini-3.8-flash" // Model for "Translate with AI": gemini-* (API key) or claude-* (claude CLI, Claude plan)
                 property JsonObject translator: JsonObject {
                     property string engine: "auto" // Run `trans -list-engines` for available engines. auto should use google
                     property string targetLanguage: "auto" // Run `trans -list-all` for available languages
@@ -7216,10 +7293,6 @@ Singleton {
                 property bool enableManualScale: false
                 property real autoScaleFactor: 1.0 // Multiplier for automatic scaling (0.5 to 1.5)
                 property real scale: 0.18 // Relative to screen size (used when enableManualScale is true)
-                // Scrolling layout overview, drawn like the scrolloverview plugin: each
-                // workspace card is the monitor at this scale, cards this far apart (px).
-                property real scrollingScale: 0.6
-                property int scrollingWorkspaceGap: 60
                 property string animationStyle: "zoom" // Options: "bounce", "smooth", "zoom", "none"
                 property bool enableCascadeAnimation: true
                 property real rows: 2

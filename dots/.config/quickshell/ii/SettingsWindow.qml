@@ -314,7 +314,18 @@ FloatingWindow {
         return true;
     }
 
+    // A page with unsaved edits registers itself here while it is shown (power/FanControlConfig).
+    // Navigation asks it first: interceptLeave(proceed) returns true when it takes over, shows
+    // its own confirmation and calls proceed() once the user saves or discards.
+    property var leaveGuard: null
+    function guardLeave(proceed): bool {
+        const guard = root.leaveGuard;
+        return !!guard && typeof guard.interceptLeave === "function" && guard.interceptLeave(proceed);
+    }
+
     function navigateBack() {
+        if (root.guardLeave(() => root.navigateBack()))
+            return true;
         if (!root.navigationHistoryActive || root.restoringNavigation
                 || root.navigationHistory.length === 0)
             return false;
@@ -328,6 +339,8 @@ FloatingWindow {
     }
 
     function navigateForward() {
+        if (root.guardLeave(() => root.navigateForward()))
+            return true;
         if (!root.navigationHistoryActive || root.restoringNavigation
                 || root.navigationForwardHistory.length === 0)
             return false;
@@ -367,7 +380,9 @@ FloatingWindow {
     }
 
     function pageIndexById(id) {
-        return SettingsPageRegistry.pageIndexById(id);
+        // A page folded into another (registry `movedTo`) opens its new home
+        const moved = SettingsPageRegistry.pageById(id)?.movedTo;
+        return SettingsPageRegistry.pageIndexById(moved ?? id);
     }
 
     /**
@@ -569,6 +584,8 @@ FloatingWindow {
 
     /// Ctrl+PageUp/PageDown: same visible order as cycling, but stops at the ends.
     function stepNavPage(delta) {
+        if (root.guardLeave(() => root.stepNavPage(delta)))
+            return;
         const visible = root.navPageIndices;
         if (visible.length === 0)
             return;
@@ -581,6 +598,8 @@ FloatingWindow {
     }
 
     function cycleNavPage(delta) {
+        if (root.guardLeave(() => root.cycleNavPage(delta)))
+            return;
         const visible = root.navPageIndices;
         if (visible.length === 0)
             return;
@@ -899,6 +918,8 @@ FloatingWindow {
                 groups: root.pageGroups
 
                 onPageSelected: idx => {
+                    if (root.guardLeave(() => root.currentPage = idx))
+                        return;
                     root.currentPage = idx;
                 }
             }

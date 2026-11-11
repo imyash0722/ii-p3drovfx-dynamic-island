@@ -353,7 +353,8 @@ Item {
         const raw = (overviewController && overviewController.progress > 0.001)
             ? parallaxX + (wallpaperPlanes.centeredX - parallaxX) * overviewController.progress
             : parallaxX;
-        return wallpaperPlanes.centeredX + (raw - wallpaperPlanes.centeredX) * editParallaxFactor;
+        const shown = raw + (wallpaperPlanes.centeredX - raw) * scrollingOverviewProgress;
+        return wallpaperPlanes.centeredX + (shown - wallpaperPlanes.centeredX) * editParallaxFactor;
     }
     readonly property real effectiveParallaxY: {
         if (videoEffectsDisabled || !overviewController.useWallpaperParallax)
@@ -361,7 +362,8 @@ Item {
         const raw = (overviewController && overviewController.progress > 0.001)
             ? parallaxY + (wallpaperPlanes.centeredY - parallaxY) * overviewController.progress
             : parallaxY;
-        return wallpaperPlanes.centeredY + (raw - wallpaperPlanes.centeredY) * editParallaxFactor;
+        const shown = raw + (wallpaperPlanes.centeredY - raw) * scrollingOverviewProgress;
+        return wallpaperPlanes.centeredY + (shown - wallpaperPlanes.centeredY) * editParallaxFactor;
     }
 
     required property bool anyWidgetIsDragging
@@ -475,12 +477,20 @@ Item {
     readonly property real defaultRatio: zoomInStyle ? zoomLevels.in.default : zoomLevels.out.default
     readonly property real zoomedRatio: zoomInStyle ? zoomLevels.in.zoomed : zoomLevels.out.zoomed
 
+    // On the scrolling layouts the scrolloverview plugin draws the overview over
+    // this layer as-is, and the overview controller stays idle. Opening it eases
+    // the wallpaper back to 100% (the plane at screen size, centred), the same
+    // zoom out the lock does. The old legacy ratio here zoomed in by 1% instead.
+    readonly property bool scrollingOverviewZoomOut: !videoEffectsDisabled && showOpeningAnimation
+        && overviewOpen && isScrollingLayout && !GlobalStates.screenLocked
+    property real scrollingOverviewProgress: scrollingOverviewZoomOut ? 1 : 0
+    Behavior on scrollingOverviewProgress {
+        animation: Appearance.animation.elementMove.numberAnimation.createObject(wallpaperImageRoot)
+    }
+
     // The overview controller owns the only background scale animation. Keeping
-    // this item at unit scale prevents the scrolling overview's legacy scale
-    // from multiplying it a second time.
-    scale: isGnomeLikeOverview
-        ? (!videoEffectsDisabled && showOpeningAnimation && overviewOpen && isScrollingLayout ? zoomedRatio : defaultRatio)
-        : 1.0
+    // this item at unit scale prevents a legacy scale from multiplying it.
+    scale: isGnomeLikeOverview && !isScrollingLayout ? defaultRatio : 1.0
     opacity: mediaModeOpen ? 0 : 1
 
     Behavior on opacity {
@@ -611,10 +621,8 @@ Item {
             Rectangle {
                 anchors.fill: parent
                 color: wallpaperImageRoot.overviewController.isGnomeLike ? "#000000" : Appearance.colors.colLayer0
-                // The scrolling overview copies the scrolloverview plugin, whose cards
-                // sit on a dark field: the backing sinks much further there.
                 opacity: wallpaperImageRoot.overviewController.isGnomeLike
-                    ? (wallpaperImageRoot.isScrollingLayout ? 0.62 : 0.24)
+                    ? 0.24
                     : wallpaperImageRoot.overviewController.dimAmount
             }
         }
@@ -730,9 +738,6 @@ Item {
         Item {
             id: wallpaperPlanes
             anchors.fill: parent
-            // Landed on the scrolling overview's row, which draws the same
-            // wallpaper and can scroll away with it.
-            opacity: wallpaperImageRoot.overviewController.scrollingHandedOff ? 0 : 1
 
             readonly property real wallpaperW: wallpaperWidth / wallpaperToScreenRatio * baseWallpaperScale
             readonly property real wallpaperH: wallpaperHeight / wallpaperToScreenRatio * baseWallpaperScale
@@ -861,7 +866,7 @@ Item {
             border.color: wallpaperImageRoot.overviewController.isGnomeLike
                 ? CF.ColorUtils.transparentize(Appearance.colors.colPrimary, 0.35)
                 : "transparent"
-            border.width: wallpaperImageRoot.overviewController.isGnomeLike && !wallpaperImageRoot.overviewController.scrollingLayout
+            border.width: wallpaperImageRoot.overviewController.isGnomeLike
                     && !wallpaperImageRoot.overviewController.isRealGnome
                 ? 1.5 * wallpaperImageRoot.scaleProgress
                 : 0
@@ -927,7 +932,9 @@ Item {
                 layer.effect: wallpaperImageRoot.materialShapeDirectMask ? materialWallpaperMaskEffect : null
                 width: wallpaperPlanes.wallpaperW
                 height: wallpaperPlanes.wallpaperH
-                readonly property real contentScale: (baseWallpaperScale > 0 ? (effectiveWallpaperScale / baseWallpaperScale) : 1.0)
+                readonly property real contentScale: (baseWallpaperScale > 0
+                        ? (effectiveWallpaperScale + (1.0 - effectiveWallpaperScale) * wallpaperImageRoot.scrollingOverviewProgress) / baseWallpaperScale
+                        : 1.0)
                     * (wallpaperImageRoot.overviewController ? wallpaperImageRoot.overviewController.wallpaperContentScale : 1.0)
 
                 Component {
@@ -968,6 +975,8 @@ Item {
                         // animated, and a 450ms chase on top would lag it.
                         Behavior on x {
                             enabled: !wallpaperImageRoot.overviewAnimationVisible
+                                && !wallpaperImageRoot.scrollingOverviewZoomOut
+                                && wallpaperImageRoot.scrollingOverviewProgress <= 0.001
                                 && wallpaperImageRoot.editProgress <= 0.001
                                 && !wallpaperImageRoot.wallpaperSettling
                                 && !GlobalStates.sidebarParallaxAnimating
@@ -978,6 +987,8 @@ Item {
                         }
                         Behavior on y {
                             enabled: !wallpaperImageRoot.overviewAnimationVisible
+                                && !wallpaperImageRoot.scrollingOverviewZoomOut
+                                && wallpaperImageRoot.scrollingOverviewProgress <= 0.001
                                 && wallpaperImageRoot.editProgress <= 0.001
                                 && !wallpaperImageRoot.wallpaperSettling
                             NumberAnimation {

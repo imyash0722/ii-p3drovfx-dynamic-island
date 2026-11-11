@@ -373,6 +373,8 @@ Scope {
                 && dockRoot.isFullWidth
             // Its compositor blur follows: nothing of its own to blur on the band.
             onOnFrameBandChanged: Appearance.dockOnFrameBand = dockRoot.onFrameBand
+            // The band left hollow while search sits over the dock: its colour, for the tray.
+            readonly property var frameBandCover: GlobalStates.dockBandCover[dockRoot.screen?.name ?? ""] ?? null
             Component.onCompleted: Appearance.dockOnFrameBand = dockRoot.onFrameBand
             readonly property bool isFullWidth: dockContent.isFullWidth
             readonly property bool isFullWidthConcave: dockContent.isFullWidthConcave
@@ -695,7 +697,9 @@ Scope {
                         // at all (dynamic island, full width).
                         readonly property real trayCornerRadius: (dockRoot.isDynamicIsland || dockRoot.isHug || dockRoot.isFullWidth) ? 0 : dockContent.dockCornerRadius
 
-                        color: (dockRoot.isDynamicIsland || dockRoot.isTransparent || dockRoot.onFrameBand) ? "transparent" : Appearance.colors.colLayer0
+                        color: (dockRoot.isDynamicIsland || dockRoot.isTransparent) ? "transparent"
+                            : dockRoot.onFrameBand ? (dockRoot.frameBandCover ?? "transparent")
+                            : Appearance.colors.colLayer0
                         radius: trayCornerRadius
                         topLeftRadius: dockRoot.isHug ? ((dock.dockEffectivePosition === "bottom" || dock.dockEffectivePosition === "right") ? dockContent.dockCornerRadius : 0) : trayCornerRadius
                         topRightRadius: dockRoot.isHug ? ((dock.dockEffectivePosition === "bottom" || dock.dockEffectivePosition === "left") ? dockContent.dockCornerRadius : 0) : trayCornerRadius
@@ -775,6 +779,30 @@ Scope {
                             }
                         }
 
+                        // Side dynamic island: the same silhouette turned to the
+                        // edge it hangs from. The concave shoulders flare into the
+                        // screen at the tray's two ends and the inner corners stay
+                        // round. It is laid out along the tray's long axis and
+                        // rotated about its centre, so it still fills the tray.
+                        Notch {
+                            id: dynamicIslandNotchVertical
+                            visible: dockRoot.isDynamicIsland && !dockContent.islandsStyle && dock.isVertical
+                            // Centred by hand: centerIn rounds to whole pixels, and on the tray's
+                            // fractional width the turned body ended 0.4 px short of the screen
+                            // edge, a column where the wallpaper showed through.
+                            x: (parent.width - width) / 2
+                            y: (parent.height - height) / 2
+                            width: parent.height
+                            height: parent.width
+                            rotation: dock.dockEffectivePosition === "left" ? -90 : 90
+                            bodyWidth: width
+                            bodyHeight: height
+                            disableBehaviors: true
+                            topRadius: dockRoot.concaveCornerRadius
+                            bottomRadius: Math.min(dockContent.dockCornerRadius, height)
+                            fillColor: Appearance.colors.colLayer0
+                        }
+
                         // Full width · rounded: the tray spans the screen and
                         // curves into it at both sides, the way the hug bar's
                         // screen corners do — the screen above looks rounded.
@@ -787,7 +815,8 @@ Scope {
                                 visible: opacity > 0.01
                                 opacity: dockVisualBackground.opacity
                                 implicitSize: Math.max(1, dockRoot.concaveCornerRadius)
-                                color: dockVisualBackground.color
+                                // On the band the frame draws the joins, hollow or not.
+                                color: dockRoot.onFrameBand ? "transparent" : dockVisualBackground.color
                                 // The filled side of each corner faces the tray
                                 // and the screen edge it meets.
                                 corner: pos === "top" ? (startEnd ? RoundCorner.CornerEnum.TopLeft : RoundCorner.CornerEnum.TopRight)
@@ -804,42 +833,6 @@ Scope {
                                 y: pos === "bottom" ? -height + tuck
                                     : pos === "top" ? parent.height - tuck
                                     : (startEnd ? 0 : parent.height - height)
-                            }
-                        }
-
-                        RoundCorner {
-                            id: concaveCorner1
-                            visible: dockRoot.isDynamicIsland && !dockContent.islandsStyle && dock.isVertical && opacity > 0.01
-                            opacity: dockVisualBackground.opacity
-                            implicitSize: Math.max(1, dockRoot.concaveCornerRadius)
-                            color: dockVisualBackground.color
-                            corner: {
-                                if (dock.dockEffectivePosition === "left") return RoundCorner.CornerEnum.BottomLeft;
-                                return RoundCorner.CornerEnum.BottomRight;
-                            }
-                            anchors {
-                                bottom: (dock.dockEffectivePosition === "left" || dock.dockEffectivePosition === "right") ? parent.top : undefined
-                                bottomMargin: (dock.dockEffectivePosition === "left" || dock.dockEffectivePosition === "right") ? -1 : 0
-                                right: (dock.dockEffectivePosition === "right") ? parent.right : undefined
-                                left: (dock.dockEffectivePosition === "left") ? parent.left : undefined
-                            }
-                        }
-
-                        RoundCorner {
-                            id: concaveCorner2
-                            visible: dockRoot.isDynamicIsland && !dockContent.islandsStyle && dock.isVertical && opacity > 0.01
-                            opacity: dockVisualBackground.opacity
-                            implicitSize: Math.max(1, dockRoot.concaveCornerRadius)
-                            color: dockVisualBackground.color
-                            corner: {
-                                if (dock.dockEffectivePosition === "left") return RoundCorner.CornerEnum.TopLeft;
-                                return RoundCorner.CornerEnum.TopRight;
-                            }
-                            anchors {
-                                top: (dock.dockEffectivePosition === "left" || dock.dockEffectivePosition === "right") ? parent.bottom : undefined
-                                topMargin: (dock.dockEffectivePosition === "left" || dock.dockEffectivePosition === "right") ? -1 : 0
-                                left: (dock.dockEffectivePosition === "left") ? parent.left : undefined
-                                right: (dock.dockEffectivePosition === "right") ? parent.right : undefined
                             }
                         }
                     }

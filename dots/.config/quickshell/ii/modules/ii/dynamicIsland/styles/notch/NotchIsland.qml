@@ -145,7 +145,7 @@ Scope {
      * agent asking for approval is not a side glance and takes the island.
      */
     readonly property var sideActivities: ["media", "ai", "recording", "timer", "mode", "update", "earbuds", "weather", "batteryGlance",
-        "reminderSoon", "privacy", "discordVoice", "phoneMirror", "phoneLink", "phoneCall", "sports", "systemTray", "easyEffects"]
+        "reminderSoon", "privacy", "discordVoice", "phoneMirror", "phoneLink", "phoneCall", "sports", "phoneLive", "systemTray", "easyEffects"]
 
     /** The resting face's height: what the clock face is sized to, never the live height. */
     readonly property real restingHeight: (root.pillShape && root.centerInBar)
@@ -770,6 +770,18 @@ Scope {
         && !GlobalStates.searchOnlyMode
         && !Config.options.search.alwaysListApps
         && (Config.options.overview.enable ?? true)
+        // On the scrolling layouts the scrolloverview plugin stands behind the search.
+        && !ScrollOverviewPlugin.hosting
+    // The plugin's overview stays up behind the island's search from open to close.
+    readonly property bool pluginOverviewWanted: root.searchActive && GlobalStates.islandOwnsSearch
+        && GlobalStates.scrollingLayoutActive
+        && !GlobalStates.searchOnlyMode && !GlobalStates.panelOpenedDirectly
+    onPluginOverviewWantedChanged: {
+        if (root.pluginOverviewWanted)
+            ScrollOverviewPlugin.open();
+        else
+            ScrollOverviewPlugin.close();
+    }
     /**
      * The island lays the overview out itself: a small fixed grid, opening and closing
      * with the island rather than playing the desktop overview's own entrance.
@@ -792,7 +804,7 @@ Scope {
      */
     readonly property var realGnomeController: GlobalStates.overviewBackgroundControllerFor(root.targetScreen?.name ?? "")
     readonly property bool realGnome: !!root.realGnomeController && root.realGnomeController.isRealGnome
-        && root.integratedOverview && !root.scrollingLayout
+        && root.integratedOverview
     /** Room the workspace indicator keeps under the plane. */
     readonly property real realGnomeIndicatorRoom: 40
     readonly property bool realGnomeSearchOpen: root.realGnome && root.searchActive
@@ -833,7 +845,6 @@ Scope {
     property real overviewReveal: root.overviewVisible ? 1.0 : 0.0
     property real overviewFade: root.overviewVisible ? 1.0 : 0.0
     readonly property bool overviewAnimating: root.searchActive || root.overviewReveal > 0.001 || root.overviewFade > 0.001
-    readonly property bool scrollingLayout: GlobalStates.scrollingLayoutActive
 
     /**
      * The workspace grid is built once and then kept.
@@ -1996,15 +2007,14 @@ Scope {
     /**
      * A second chance at the keyboard for the launcher.
      *
-     * OnDemand is only granted on a *change* of interactivity, and the launcher can
-     * open without one: the surface already asked for the keyboard for the face it
-     * replaces (dashboard, picker, session menu), or the grant landed before the
-     * island had taken its shape. The field then sat focused inside a window the
-     * compositor never gave the keyboard to, until the pointer moved over it.
-     * Shortly after opening, a window that is still not active drops the request for
-     * a moment and asks again, which is the edge the grant waits for.
+     * This window is always mapped, and Hyprland (0.57) never grants the keyboard to a
+     * mapped layer surface for switching to OnDemand - only mapping or switching to
+     * Exclusive does. The keyboard arrives through the focus grab alone (see
+     * `grabWidened` on the window). If it still has not arrived shortly after opening,
+     * the grab is taken again with the island as its only window, which hands the
+     * keyboard to the island whatever the pointer is over. Toggling the interactivity
+     * instead, as this used to, is not a change Hyprland grants on.
      */
-    property bool keyboardNudge: false
     property int keyboardNudgeTries: 0
 
     onSearchActiveChanged: {
@@ -2027,17 +2037,7 @@ Scope {
             if (root.keyboardNudgeTries >= 2)
                 return;
             root.keyboardNudgeTries++;
-            root.keyboardNudge = true;
-            keyboardNudgeRelease.restart();
-        }
-    }
-
-    Timer {
-        id: keyboardNudgeRelease
-        interval: 50
-        repeat: false
-        onTriggered: {
-            root.keyboardNudge = false;
+            win.rearmGrab();
             notchContent.focusSearch();
             keyboardGrantCheck.restart();
         }
@@ -2078,7 +2078,7 @@ Scope {
         // change of face is the change Hyprland grants on.
         WlrLayershell.keyboardFocus: (root.wallpaperActive || root.searchActive || root.sessionActive
                 || root.askpassActive || notchContent.dashboardWantsKeyboard
-                || root.expanded || root.dashboardActive || root.expandedBubbleId !== "") && !root.keyboardNudge
+                || root.expanded || root.dashboardActive || root.expandedBubbleId !== "")
             ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
         Shortcut {
@@ -2104,8 +2104,7 @@ Scope {
                 // A grid that hangs outside the body needs the whole surface to accept
                 // input; the integrated one is inside the island's own shape, which
                 // maskTarget already covers.
-                const outsideGrid = root.overviewVisible
-                    && (root.scrollingLayout || !root.integratedOverview);
+                const outsideGrid = root.overviewVisible && !root.integratedOverview;
                 // Real Gnome's window picker sits under the island and takes the pointer.
                 return outsideGrid || root.realGnomeSearchOpen ? fullWindow : maskTarget;
             }
@@ -2201,25 +2200,81 @@ Scope {
         Timer {
             id: grabRearm
             interval: 120
-            onTriggered: win.grabSuspended = false
+            onTriggered: {
+                // Taken again on the new monitor with the island alone, like any grab.
+                win.settleGrab();
+                win.grabSuspended = false;
+            }
+        }
+
+        // The dashboard joins the two that already grabbed: it is as much an open
+        // surface as they are, and having the session menu inside it close on a
+        // click away while the dashboard holding it would not was the tell.
+        // Editing the grid is left out on purpose - a grab there would eat every
+        // click outside without anything to close. An open detail page is not
+        // editing: it pins the island against the pointer leaving, not against a click.
+        // The wallpaper browser needs it too: the surface is only OnDemand, so
+        // without the grab it had no keyboard until it was clicked.
+        readonly property bool grabWanted: root.searchActive || root.sessionActive || root.wallpaperActive
+            || (root.dashboardActive && !notchContent.dashboardGridEditing)
+            || (root.askpassActive && root.askpassFocused)
+
+        /**
+         * Whether the grab may take in the shared windows (the bar, its popups, the OSK).
+         *
+         * The grab is what hands this window the keyboard: Hyprland gives it to the first
+         * grab window whose surface holds the cursor, in no fixed order. With the bar in
+         * the grab from the start, a cursor resting over the bar - right where the island
+         * sits - put the keyboard on the bar: the launcher took clicks but no typing.
+         * So the grab starts with the island alone and widens once the keyboard is here;
+         * a later widening does not move the keyboard again.
+         */
+        property bool grabWidened: false
+        readonly property bool keyboardHeld: fullWindow.Window.active
+        onKeyboardHeldChanged: {
+            if (win.keyboardHeld && win.grabWanted && !win.grabSuspended && !grabWidenTimer.running)
+                win.grabWidened = true;
+        }
+        function settleGrab() {
+            win.grabWidened = false;
+            grabWidenTimer.restart();
+        }
+        onGrabWantedChanged: {
+            if (win.grabWanted) {
+                win.settleGrab();
+            } else {
+                grabWidenTimer.stop();
+                win.grabWidened = false;
+            }
+        }
+        // Long enough for the island-only grab to have reached the compositor before the
+        // window's existing focus (from a face shown earlier) is taken as its result.
+        Timer {
+            id: grabWidenTimer
+            interval: 60
+            onTriggered: {
+                if (win.keyboardHeld)
+                    win.grabWidened = true;
+            }
+        }
+        /// Takes the grab again with the island alone, which hands it the keyboard.
+        function rearmGrab() {
+            if (!win.grabWanted)
+                return;
+            win.grabWidened = false;
+            win.grabSuspended = true;
+            Qt.callLater(() => {
+                win.settleGrab();
+                win.grabSuspended = false;
+            });
         }
 
         HyprlandFocusGrab {
             // Popups opened from inside the island (e.g. a tray item's menu in Active
             // apps) are separate Wayland windows registered in GlobalFocusGrab; without
             // them here, every click on such a menu counted as a click outside.
-            windows: [win, ...GlobalFocusGrab.persistent]
-            // The dashboard joins the two that already grabbed: it is as much an open
-            // surface as they are, and having the session menu inside it close on a
-            // click away while the dashboard holding it would not was the tell.
-            // Editing the grid is left out on purpose - a grab there would eat every
-            // click outside without anything to close. An open detail page is not
-            // editing: it pins the island against the pointer leaving, not against a click.
-            // The wallpaper browser needs it too: the surface is only OnDemand, so
-            // without the grab it had no keyboard until it was clicked.
-            active: !win.grabSuspended && (root.searchActive || root.sessionActive || root.wallpaperActive
-                || (root.dashboardActive && !notchContent.dashboardGridEditing)
-                || (root.askpassActive && root.askpassFocused))
+            windows: win.grabWidened ? [win, ...GlobalFocusGrab.persistent] : [win]
+            active: !win.grabSuspended && win.grabWanted
             // A menu is a question put to the pointer, so clicking away is an answer -
             // and so is clicking away from the launcher, as it is everywhere else the
             // launcher is drawn.
@@ -2913,7 +2968,7 @@ Scope {
                     // The workspace overview, drawn inside the body under the search
                     // field; see NotchContent.overviewVisible.
                     overviewVisible: root.integratedOverview && root.overviewVisible
-                    overviewBuilt: root.overviewBuilt && !root.scrollingLayout && root.integratedOverview
+                    overviewBuilt: root.overviewBuilt && root.integratedOverview
                     overviewFade: root.integratedOverview ? root.overviewFade : 0
                     overviewRows: root.overviewRows
                     overviewColumns: root.overviewColumns
@@ -2944,7 +2999,7 @@ Scope {
             anchors.horizontalCenter: parent.horizontalCenter
             // Integrated, the grid is drawn inside the body by NotchContent; this
             // panel is what the overview looks like when the island does not hold it.
-            active: root.overviewBuilt && !root.scrollingLayout && !root.integratedOverview
+            active: root.overviewBuilt && !root.integratedOverview
             visible: opacity > 0.01
             opacity: root.overviewFade
 
@@ -2973,35 +3028,6 @@ Scope {
                 gridColumns: root.integratedOverview ? root.overviewColumns : Config.options.overview.columns
                 fixedScale: root.integratedOverview ? root.overviewScale : 0
                 suppressEntrance: root.integratedOverview
-            }
-        }
-
-        Loader { // Scrolling overview
-            id: scrollingOverviewLoader
-            // Built off the UI thread: the workspace grid (previews of every window) is the
-            // heaviest thing search opens, and building it synchronously stalled the
-            // island's morph for its first frames. It fades in after the surface anyway.
-            asynchronous: true
-            // The whole window: the rows fade out above the island's settled search
-            // face instead of hanging from the body and riding its morph.
-            anchors.fill: parent
-            // Only when the island holds search: otherwise a second overview would
-            // live here, recapturing previews and aiming the background zoom.
-            active: root.overviewBuilt && root.scrollingLayout && GlobalStates.islandOwnsSearch
-            visible: root.overviewVisible || root.overviewFade > 0.001
-
-            sourceComponent: ScrollingOverviewWidget {
-                anchors.fill: parent
-                panelWindow: win
-                monitorIndex: Quickshell.screens.indexOf(win.screen)
-                presented: root.overviewVisible
-                // Where the search face settles, held while results grow the body.
-                topInset: 0
-                Binding on topInset {
-                    when: root.overviewVisible
-                    value: container.y + root.targetHeight + Appearance.sizes.elevationMargin * 2
-                    restoreMode: Binding.RestoreNone
-                }
             }
         }
 

@@ -16,6 +16,8 @@ MouseArea { // Notification group area
     property var notifications: notificationGroup?.notifications ?? []
     property int notificationCount: notifications.length
     property bool multipleNotifications: notificationCount > 1
+    /** A phone live update: one notification, drawn as LiveNotificationCard. */
+    readonly property bool live: notificationGroup?.live === true
     property bool expanded: false
     property bool popup: false
     property real zoom: 1.0
@@ -34,7 +36,9 @@ MouseArea { // Notification group area
     property real _entranceOpacity: 0
     property real _entranceScale: 0.65
     property real _entranceTranslateY: 50
-    property bool _entranceDone: false
+    // A popup is born done: its entrance is the slide, and starting at false made
+    // the card fade in from 0 through background's opacity Behavior.
+    property bool _entranceDone: popup
 
     function finishEntrance() {
         entranceAnim.stop();
@@ -56,7 +60,9 @@ MouseArea { // Notification group area
     }
 
     onEntranceTriggerChanged: {
-        if (popup || entranceAnimationsEnabled)
+        if (popup)
+            return;
+        if (entranceAnimationsEnabled)
             root.startEntrance();
         else
             root.finishEntrance();
@@ -68,10 +74,113 @@ MouseArea { // Notification group area
     }
 
     Component.onCompleted: {
-        if (popup || (entranceAnimationsEnabled && entranceTrigger >= 0))
+        if (popup) {
+            // The popup's motion is the slide below; the fade/scale/+50 px entrance
+            // is the sidebar's (its +50 px pushed a card into the next one's slot).
+            root.finishEntrance();
+            root.beginPopupEntrance();
+        } else if (entranceAnimationsEnabled && entranceTrigger >= 0)
             root.startEntrance();
         else
             root.finishEntrance();
+    }
+
+    // ── Popup motion ──
+    // The ListView only ever places this card at its settled slot (no y
+    // transitions there). What the eye sees is that slot plus a visual offset:
+    //  · entrance: slides in vertically from the screen edge the popup sits on;
+    //  · any later shift of the slot (a card added above or removed, a reorder,
+    //    a sibling's height settling): the old→new jump replayed as an offset
+    //    decaying to 0, so the resting layout can never be stale.
+    readonly property var popupView: ListView.view
+    readonly property bool popupFromBottom: popupView !== null
+        && popupView.verticalLayoutDirection === ListView.BottomToTop
+    // The slot's on-screen top: in a bottom-to-top list a new card moves the
+    // others through contentY/height, not through their own y.
+    readonly property real popupSlotTop: (popup && popupView)
+        ? popupView.y + root.y - popupView.contentY : 0
+    // How far past the edge the card starts: its own on-screen top/bottom plus a gap.
+    readonly property real popupEnterDistance: {
+        if (!popup || !popupView)
+            return 0;
+        return popupFromBottom
+            ? ((popupView.parent?.height ?? 0) - popupSlotTop + root.dismissOvershoot)
+            : -(popupSlotTop + root.height + root.dismissOvershoot);
+    }
+    property real popupEnterProgress: popup ? 0 : 1 // 0 = past the edge, 1 = at rest
+    property real popupShiftOffset: 0
+    property bool popupWaitingFrame: false
+    property real _popupLastY: NaN
+    readonly property real popupOffsetY: popup
+        ? ((1 - popupEnterProgress) * popupEnterDistance + popupShiftOffset) : 0
+
+    // Newer groups sit on top, so a card entering below slides in from behind them.
+    z: popup ? 100 - Math.max(0, index) : 1
+    transform: Translate { y: root.popupOffsetY }
+
+    function beginPopupEntrance() {
+        popupEnterProgress = 0;
+        // The first notification maps the popup surface, which costs a few frames;
+        // start once a frame with this card in it reached the screen, or the slide
+        // would already be half over when it becomes visible.
+        popupWaitingFrame = true;
+        popupFrameFallback.restart();
+    }
+    function startPopupEnterAnim() {
+        if (!popupWaitingFrame)
+            return;
+        popupWaitingFrame = false;
+        popupFrameFallback.stop();
+        popupEnterAnim.restart();
+    }
+    Connections {
+        target: root.popupWaitingFrame ? root.Window.window : null
+        function onFrameSwapped() { root.startPopupEnterAnim(); }
+    }
+    Timer {
+        id: popupFrameFallback
+        interval: 160
+        onTriggered: root.startPopupEnterAnim()
+    }
+    NumberAnimation {
+        id: popupEnterAnim
+        target: root
+        property: "popupEnterProgress"
+        from: 0
+        to: 1
+        // Long, soft settle with a small overshoot (~3% of the travel). The
+        // expressive spatial curves felt stiff and quick over an off-screen travel.
+        duration: Math.round(700 * Appearance.animMultiplier)
+        easing.type: Easing.OutBack
+        easing.overshoot: 0.8
+        onStopped: root._popupLastY = root.popupSlotTop
+    }
+    NumberAnimation {
+        id: popupShiftAnim
+        target: root
+        property: "popupShiftOffset"
+        to: 0
+        duration: Appearance.animation.elementMove.duration
+        easing.type: Appearance.animation.elementMove.type
+        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+    }
+    onPopupSlotTopChanged: {
+        if (!popup)
+            return;
+        const last = _popupLastY;
+        _popupLastY = popupSlotTop;
+        // While entering, the distance already follows the live slot; a scroll
+        // the reader drives must move the card with it, not chase it.
+        if (isNaN(last) || popupWaitingFrame || popupEnterAnim.running
+                || popupView.dragging || popupView.flicking || popupView._wheelScrolling)
+            return;
+        const delta = last - popupSlotTop;
+        if (Math.abs(delta) < 0.5)
+            return;
+        popupShiftAnim.stop();
+        popupShiftOffset += delta;
+        popupShiftAnim.from = popupShiftOffset;
+        popupShiftAnim.start();
     }
 
     SequentialAnimation {
@@ -135,18 +244,11 @@ MouseArea { // Notification group area
     }
     property real padding: 10 * zoom
     implicitHeight: background.implicitHeight
-    // Popup groups may use the scale entrance animation. Sidebar groups must stay
-    // at layout scale 1.0: their parent ListView owns the delegate geometry, and
-    // a transient scale there can make the next group paint over this one.
-    scale: popup ? (_entranceDone ? 1.0 : _entranceScale) : 1.0
-    Behavior on scale {
-        enabled: popup && !entranceAnim.running
-        NumberAnimation {
-            duration: 350
-            easing.type: Easing.OutBack
-            easing.overshoot: 0.8
-        }
-    }
+    // Always layout scale 1.0. The popup used to be born at 0.65 and an OutBack
+    // Behavior grew it to 1 the moment its entrance finished, which read as a
+    // scale-in under the slide; in the sidebar a transient scale lets the next
+    // group paint over this one.
+    scale: 1.0
 
     property real dragConfirmThreshold: 70 // Drag further to discard notification
     property real dismissOvershoot: 20 // Account for gaps and bouncy animations
@@ -217,7 +319,8 @@ MouseArea { // Notification group area
         onFinished: () => {
             const ids = root.notifications.map(n => n.notificationId);
             if (ids.length > 0) {
-                Notifications.discardMultipleNotifications(ids);
+                // A swipe or the close button on a live card is the by-hand dismissal.
+                Notifications.discardMultipleNotifications(ids, root.live);
             }
         }
     }
@@ -272,7 +375,8 @@ MouseArea { // Notification group area
         id: background
         anchors.left: parent.left
         width: parent.width
-        color: popup ? Appearance.colors.colBackgroundSurfaceContainer : Appearance.colors.colLayer2
+        color: root.live ? Appearance.colors.colPrimaryContainer
+            : popup ? Appearance.colors.colBackgroundSurfaceContainer : Appearance.colors.colLayer2
         radius: Appearance.rounding.windowRounding * root.zoom
         anchors.leftMargin: root.xOffset
 
@@ -311,7 +415,7 @@ MouseArea { // Notification group area
         clip: true
         // Reserve the height of every visible preview; expanded groups grow with
         // the full Column + Repeater body as lazy loading adds more delegates.
-        implicitHeight: row.implicitHeight + root.padding * 2
+        implicitHeight: (root.live ? liveCardLoader.implicitHeight : row.implicitHeight) + root.padding * (root.live ? 2.6 : 2)
 
         Behavior on implicitHeight {
             // Only animate implicitHeight when manually expanding/collapsing.
@@ -328,8 +432,25 @@ MouseArea { // Notification group area
             }
         }
 
+        Loader {
+            id: liveCardLoader
+            active: root.live
+            visible: active
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.margins: root.padding * 1.3
+            sourceComponent: LiveNotificationCard {
+                notificationObject: root.notifications[0] ?? null
+                zoom: root.zoom
+                popup: root.popup
+                onDismissRequested: root.destroyWithAnimation()
+            }
+        }
+
         RowLayout { // Left column for icon, right column for content
             id: row
+            visible: !root.live
             anchors.top: parent.top
             anchors.left: parent.left
             anchors.right: parent.right

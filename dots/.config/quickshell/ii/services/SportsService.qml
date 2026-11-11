@@ -18,7 +18,9 @@ Item {
     readonly property bool lockEnabled: (Config.options?.lock?.sports ?? true)
         && (GlobalStates?.lockLookActive ?? false)
     property int widgetSubscribers: 0
-    readonly property bool enabled: barEnabled || dockEnabled || lockEnabled || widgetSubscribers > 0
+    // Settings → APIs → Sports master switch; off means no ESPN request at all.
+    readonly property bool apiEnabled: Config.options?.bar?.sports?.apiEnabled ?? true
+    readonly property bool enabled: apiEnabled && (barEnabled || dockEnabled || lockEnabled || widgetSubscribers > 0)
     // AI consumers are counted separately from the visual widgets. They may
     // query a league that is not monitored by the bar, but must never cause a
     // visual selection or a Config write as a side effect.
@@ -33,25 +35,21 @@ Item {
     // subscriber keeps a weekly scoreboard warm without making the sports bar
     // a prerequisite for calendar-only users.
     property int timetableSubscribers: 0
-    readonly property bool timetableActive: timetableSubscribers > 0
+    readonly property bool timetableActive: apiEnabled && timetableSubscribers > 0
     property string teamFilter: Config.options.bar.sports.teamFilter
     property int updateInterval: Config.options.bar.sports.updateInterval
 
     property var allGames: []
-    property var customOrder: Config.options.bar.sports.customOrder
-    onCustomOrderChanged: {
-        if (JSON.stringify(Config.options.bar.sports.customOrder) !== JSON.stringify(customOrder)) {
-            Config.options.bar.sports.customOrder = customOrder;
-        }
-    }
+    // Serialized copy of the last published `allGames`. A refresh that brings
+    // the same data back keeps the same array, so nothing bound to the feed
+    // (bar, dock, popup rows) re-evaluates on an idle poll.
+    property string _compactSignature: ""
     property int currentGameIndex: 0
     property var currentGame: null
     onCurrentGameChanged: {
-        if (currentGame) {
-            Config.options.bar.sports.activeGameId = currentGame.id;
-        } else {
-            Config.options.bar.sports.activeGameId = "";
-        }
+        const id = currentGame ? String(currentGame.id) : "";
+        if (Config.options.bar.sports.activeGameId !== id)
+            Config.options.bar.sports.activeGameId = id;
     }
 
     property bool loading: false
@@ -107,6 +105,22 @@ Item {
     readonly property int maximumDetailsEntries: 16
     readonly property int maximumDetailsCacheBytes: 2 * 1024 * 1024
     readonly property list<string> apiHosts: ["site.web.api.espn.com", "site.api.espn.com"]
+
+    onApiEnabledChanged: {
+        if (root.apiEnabled)
+            return;
+        root.cancelCompactRequests();
+        root.cancelSearchRequests();
+        root.cancelTimetableRequests();
+        root.allGames = [];
+        root._compactSignature = "";
+        root._scoreMemory = ({});
+        root._cardMemory = ({});
+        root.currentGameIndex = 0;
+        root.currentGame = null;
+        root.searchGames = [];
+        root.timetableGames = [];
+    }
 
     function acquireAiSubscriber() {
         aiSubscribers += 1;
@@ -195,6 +209,9 @@ Item {
         if (!root.enabled) {
             root.cancelCompactRequests();
             allGames = [];
+            _compactSignature = "";
+            _scoreMemory = ({});
+            _cardMemory = ({});
             currentGameIndex = 0;
             currentGame = null;
         }
@@ -355,6 +372,9 @@ Item {
         root.cancelCompactRequests();
         if (!enabled) {
             allGames = [];
+            _compactSignature = "";
+            _scoreMemory = ({});
+            _cardMemory = ({});
             return;
         }
 
@@ -365,6 +385,9 @@ Item {
 
         if (leaguesToFetch.length === 0) {
             allGames = [];
+            _compactSignature = "";
+            _scoreMemory = ({});
+            _cardMemory = ({});
             loading = false;
             return;
         }
@@ -424,6 +447,11 @@ Item {
 
     function fetchSearchGamesForToday() {
         root.cancelSearchRequests();
+        if (!root.apiEnabled) {
+            root.searchGames = [];
+            root.searchLoading = false;
+            return;
+        }
         const leaguesToFetch = root.searchLeagueEntries();
         root.searchLoading = true;
         root.searchError = "";
@@ -901,6 +929,8 @@ Item {
     }
 
     function startScheduleRequest(key, request) {
+        if (!root.apiEnabled)
+            return;
         const host = root.apiHosts[request.hostIndex] || root.apiHosts[0];
         const url = `https://${host}/apis/site/v2/sports/${encodeURIComponent(request.entry.sport)}/${encodeURIComponent(request.entry.league)}/scoreboard?dates=${root.scheduleRequestMonth(request)}`;
         const xhr = new XMLHttpRequest();
@@ -1329,6 +1359,8 @@ Item {
     }
 
     function requestGameDetails(game, force = false) {
+        if (!root.apiEnabled)
+            return;
         const id = String(game?.id ?? "");
         const sport = String(game?.sport ?? "");
         const league = String(game?.leagueId ?? "");
@@ -1570,6 +1602,185 @@ Item {
         }
     }
 
+    // ESPN's match page for a scoreboard event ("summary" desktop link), with
+    // the generic gameId URL as a fallback for events that ship no links.
+    function compactGameLink(event) {
+        const links = Array.isArray(event?.links) ? event.links : [];
+        let fallback = "";
+        for (let i = 0; i < links.length; i++) {
+            const href = String(links[i]?.href ?? "");
+            if (!/^https?:\/\//.test(href))
+                continue;
+            const rel = Array.isArray(links[i].rel) ? links[i].rel : [];
+            if (rel.indexOf("summary") !== -1 && rel.indexOf("desktop") !== -1)
+                return href;
+            if (fallback === "" && rel.indexOf("desktop") !== -1)
+                fallback = href;
+        }
+        if (fallback !== "")
+            return fallback;
+        const sport = encodeURIComponent(String(event?.sportCategory ?? ""));
+        return event?.id && sport !== "" ? `https://www.espn.com/${sport}/game/_/gameId/${encodeURIComponent(event.id)}` : "";
+    }
+
+    // Scoring plays of a competition as {teamId, name, minute, penalty, ownGoal},
+    // oldest first. Only the fields the goal celebration shows are kept.
+    function compactScorers(comp) {
+        const details = Array.isArray(comp?.details) ? comp.details : [];
+        const result = [];
+        for (let i = 0; i < details.length; i++) {
+            const detail = details[i];
+            if (!detail || !detail.scoringPlay || detail.shootout)
+                continue;
+            const athlete = Array.isArray(detail.athletesInvolved) && detail.athletesInvolved.length > 0 ? detail.athletesInvolved[0] : null;
+            result.push({
+                teamId: String(detail.team?.id ?? ""),
+                name: String(athlete?.displayName ?? athlete?.shortName ?? ""),
+                minute: String(detail.clock?.displayValue ?? ""),
+                penalty: detail.penaltyKick === true,
+                ownGoal: detail.ownGoal === true
+            });
+        }
+        return result;
+    }
+
+    // Bookings of a competition as {teamId, name, minute, red}, oldest first.
+    // A second yellow arrives flagged as red.
+    function compactCards(comp) {
+        const details = Array.isArray(comp?.details) ? comp.details : [];
+        const result = [];
+        for (let i = 0; i < details.length; i++) {
+            const detail = details[i];
+            if (!detail || !(detail.yellowCard || detail.redCard))
+                continue;
+            const athlete = Array.isArray(detail.athletesInvolved) && detail.athletesInvolved.length > 0 ? detail.athletesInvolved[0] : null;
+            result.push({
+                teamId: String(detail.team?.id ?? ""),
+                name: String(athlete?.displayName ?? athlete?.shortName ?? ""),
+                minute: String(detail.clock?.displayValue ?? ""),
+                red: detail.redCard === true
+            });
+        }
+        return result;
+    }
+
+    // Card feed for the bar notice, same memory rules as goals: ESPN appends
+    // bookings in order, so anything past the count seen last poll is new.
+    signal cardShown(var card)
+    property var _cardMemory: ({})
+
+    function buildCard(game, card) {
+        const team = card.teamId !== "" && card.teamId === game.away?.id ? game.away : game.home;
+        return {
+            gameId: String(game.id),
+            red: card.red === true,
+            player: String(card.name ?? ""),
+            minute: String(card.minute ?? ""),
+            teamName: String(team?.name ?? ""),
+            teamLogo: String(team?.logo ?? "")
+        };
+    }
+
+    function detectCards(games) {
+        const previous = root._cardMemory;
+        const next = ({});
+        const shown = [];
+        for (let i = 0; i < games.length; i++) {
+            const game = games[i];
+            const cards = Array.isArray(game.cards) ? game.cards : [];
+            next[game.id] = cards.length;
+            const before = previous[game.id];
+            if (before === undefined || game.state !== "in" || game.sport !== "soccer")
+                continue;
+            for (let j = before; j < cards.length; j++)
+                shown.push(root.buildCard(game, cards[j]));
+        }
+        root._cardMemory = next;
+        for (let i = 0; i < shown.length; i++)
+            root.cardShown(shown[i]);
+    }
+
+    // Goal feed for the bar celebration. Scores are remembered per game; a
+    // live football game whose score went up since the previous poll emits
+    // one `goalScored` per side that scored. The first poll after boot (or
+    // after the game list was cleared) only seeds the memory.
+    signal goalScored(var goal)
+    property var _scoreMemory: ({})
+
+    function buildGoal(game, side) {
+        const team = side === "away" ? game.away : game.home;
+        // ESPN often publishes the scoring play a poll after the score. Name a
+        // scorer only once the team's listed goals have caught up with its
+        // score; until then the banner shows the team instead of a stale name.
+        const scorers = Array.isArray(game.scorers) ? game.scorers : [];
+        const teamScorers = team.id ? scorers.filter(item => item.teamId === team.id) : [];
+        const teamScore = parseInt(team.score ?? "", 10);
+        const scorer = teamScorers.length > 0 && !isNaN(teamScore) && teamScorers.length >= teamScore
+            ? teamScorers[teamScorers.length - 1] : null;
+        return {
+            gameId: String(game.id),
+            side: side,
+            league: String(game.league ?? ""),
+            teamName: String(team.name ?? ""),
+            teamLogo: String(team.logo ?? ""),
+            homeName: String(game.home?.name ?? ""),
+            awayName: String(game.away?.name ?? ""),
+            homeScore: String(game.home?.score ?? "0"),
+            awayScore: String(game.away?.score ?? "0"),
+            scorer: scorer ? scorer.name : "",
+            minute: scorer ? scorer.minute : "",
+            penalty: scorer ? scorer.penalty : false,
+            ownGoal: scorer ? scorer.ownGoal : false
+        };
+    }
+
+    function detectGoals(games) {
+        const previous = root._scoreMemory;
+        const next = ({});
+        const goals = [];
+        for (let i = 0; i < games.length; i++) {
+            const game = games[i];
+            const home = parseInt(game.home?.score ?? "", 10);
+            const away = parseInt(game.away?.score ?? "", 10);
+            if (isNaN(home) || isNaN(away))
+                continue;
+            next[game.id] = { home: home, away: away };
+            const before = previous[game.id];
+            if (!before || game.state !== "in" || game.sport !== "soccer")
+                continue;
+            if (home > before.home)
+                goals.push(root.buildGoal(game, "home"));
+            if (away > before.away)
+                goals.push(root.buildGoal(game, "away"));
+        }
+        root._scoreMemory = next;
+        for (let i = 0; i < goals.length; i++)
+            root.goalScored(goals[i]);
+    }
+
+    // `qs -c ii ipc call sportsGoal simulate home|away` plays the celebration
+    // for the current game without waiting for a real goal.
+    IpcHandler {
+        target: "sportsGoal"
+        function simulate(side: string): string {
+            const game = root.currentGame ?? root.allGames[0];
+            if (!game)
+                return "no game";
+            root.goalScored(root.buildGoal(game, side === "away" ? "away" : "home"));
+            return "ok";
+        }
+        // `qs -c ii ipc call sportsGoal card yellow|red`
+        function card(color: string): string {
+            const game = root.currentGame ?? root.allGames[0];
+            if (!game)
+                return "no game";
+            const cards = Array.isArray(game.cards) ? game.cards : [];
+            const sample = cards.length > 0 ? cards[cards.length - 1] : { teamId: game.home?.id ?? "", name: "", minute: "" };
+            root.cardShown(root.buildCard(game, Object.assign({}, sample, { red: color === "red" })));
+            return "ok";
+        }
+    }
+
     function processGames(events, forSearch = false) {
         let validGames = [];
 
@@ -1698,12 +1909,14 @@ Item {
                             second = comp.competitors[0];
                         }
                         home = {
+                            id: first.team ? String(first.team.id ?? "") : "",
                             name: first.team ? (first.team.shortDisplayName || first.team.name) : "Home",
                             score: first.score || "0",
                             logo: first.team ? first.team.logo : "",
                             winner: first.winner || false
                         };
                         away = {
+                            id: second.team ? String(second.team.id ?? "") : "",
                             name: second.team ? (second.team.shortDisplayName || second.team.name) : "Away",
                             score: second.score || "0",
                             logo: second.team ? second.team.logo : "",
@@ -1737,6 +1950,9 @@ Item {
                             : (comp.status ? comp.status.type.detail : (event.status ? event.status.type.detail : ""))),
                     state: comp.status ? comp.status.type.state : state,
                     lastPlay: lastPlayText,
+                    link: root.compactGameLink(event),
+                    scorers: isRacing ? [] : root.compactScorers(comp),
+                    cards: isRacing ? [] : root.compactCards(comp),
                     home: home,
                     away: away
                 });
@@ -1749,24 +1965,25 @@ Item {
             return;
         }
 
-        if (customOrder && customOrder.length > 0) {
-            validGames.sort((a, b) => {
-                let idxA = customOrder.indexOf(a.id);
-                let idxB = customOrder.indexOf(b.id);
-                if (idxA !== -1 && idxB !== -1) {
-                    return idxA - idxB;
-                }
-                if (idxA !== -1) return -1;
-                if (idxB !== -1) return 1;
-                const order = { "in": 0, "pre": 1, "post": 2 };
-                return (order[a.state] || 3) - (order[b.state] || 3);
-            });
-        } else {
-            validGames.sort((a, b) => {
-                const order = { "in": 0, "pre": 1, "post": 2 };
-                return (order[a.state] || 3) - (order[b.state] || 3);
-            });
-        }
+        // Live first, then upcoming by kickoff, then finished. The date tie-break
+        // keeps the order stable between polls (Array.sort over equal keys
+        // otherwise follows whatever order the league requests finished in).
+        const stateOrder = { "in": 0, "pre": 1, "post": 2 };
+        validGames.sort((a, b) => {
+            const byState = (stateOrder[a.state] ?? 3) - (stateOrder[b.state] ?? 3);
+            if (byState !== 0)
+                return byState;
+            const byDate = new Date(a.date).getTime() - new Date(b.date).getTime();
+            return byDate !== 0 ? byDate : String(a.id).localeCompare(String(b.id));
+        });
+
+        root.detectGoals(validGames);
+        root.detectCards(validGames);
+
+        const signature = JSON.stringify(validGames);
+        if (signature === root._compactSignature)
+            return;
+        root._compactSignature = signature;
 
         let nextIndex = 0;
         let currentId = currentGame ? currentGame.id : Config.options.bar.sports.activeGameId;
@@ -1884,6 +2101,9 @@ Item {
             fetchGames();
         } else {
             allGames = [];
+            _compactSignature = "";
+            _scoreMemory = ({});
+            _cardMemory = ({});
             currentGameIndex = 0;
             currentGame = null;
         }
