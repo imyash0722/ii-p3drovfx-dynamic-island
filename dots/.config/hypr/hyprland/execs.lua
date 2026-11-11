@@ -64,8 +64,5 @@ hl.on("hyprland.start", function()
 end)
 
 hl.on("hyprland.shutdown", function()
-    local runtime_dir = os.getenv("XDG_RUNTIME_DIR") or "/tmp"
-    os.remove(runtime_dir .. "/hypr_session_active")
-    os.execute(HOME .. "/.local/bin/hyprmon ensure-internal 2>/dev/null")
     os.execute("systemctl --user stop hyprland-session.target && sleep 0.1")
 end)

@@ -1355,7 +1355,7 @@ Scope {
                 && !root.eventRevealed && !root.hasUrgentActivity
                 // Bubbles hang from the island: it stays while one is being read.
                 && !root.anyBubbleHovered && root.expandedBubbleId === ""
-                && !(root.centerInBar && (GlobalStates.barInBarRevealed || (GlobalStates.topShellRevealed && GlobalStates.topShellHovered)));
+                && !(root.centerInBar && (GlobalStates.barInBarRevealed || GlobalStates.topShellRevealed));
         if (root.centerInBar)
             return false;
         // Without auto-hide only the resting face hides, so the island is not a
@@ -2516,10 +2516,6 @@ Scope {
             height: (root.centerInBar && !BarInteraction.autoHide && !root.pillShape) ? root.centerBarProgress * container.animatedHeight : container.animatedHeight
 
             y: {
-                const away = -Math.max(container.height, root.targetHeight, Appearance.sizes.barHeight) - 10;
-                if (root.autoHide && root.hidden)
-                    return away;
-
                 if (root.pillShape) {
                     let shown = root.pillInset;
                     if (!root.centerInBar && root.hasTopBar)
@@ -2528,17 +2524,16 @@ Scope {
                         shown += root.barBodyInset;
                     else if (root.usingWrappedFrame)
                         shown += Config.options.appearance.wrappedFrameThickness;
-                    const hFactor = Math.max(1, container.height / Math.max(1, Appearance.sizes.barHeight));
+                    const away = -container.height - 10;
                     if (root.centerInBar)
-                        return shown - root.barHiddenAmount * hFactor;
+                        return shown - root.barHiddenAmount;
                     return root.hidden ? away : shown;
                 }
                 if (root.centerInBar) {
                     let shown = 0;
                     if (root.usingWrappedFrame)
                         shown += Config.options.appearance.wrappedFrameThickness;
-                    const hFactor = Math.max(1, container.height / Math.max(1, Appearance.sizes.barHeight));
-                    return shown - root.barHiddenAmount * hFactor;
+                    return shown - root.barHiddenAmount;
                 }
                 if (root.hidden && !root.centerInBar)
                     return -root.targetHeight - 10;

@@ -217,7 +217,7 @@ Scope {
                 GlobalStates.reportTopShellHover(screenKey, hoverRegion.containsMouse);
                 if (hoverRegion.containsMouse) {
                     hoverCloseTimer.stop();
-                    if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow) {
+                    if (barRoot.hoverDelay <= 0 || barRoot.hiddenAmount < 1 || barRoot.superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen) {
                         barRoot.hoverTriggered = true;
                     } else {
                         hoverOpenTimer.restart();
@@ -230,15 +230,15 @@ Scope {
         }
 
         property bool superShow: false
-        readonly property bool localBarRevealed: hoverTriggered || superShow || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
+        readonly property bool localBarRevealed: hoverTriggered || superShow || GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen || GlobalStates.editMode || GlobalStates.anyBarPopupOpen
         onLocalBarRevealedChanged: {
             if (BarInteraction.isIslandInBarCenter) {
                 GlobalStates.barInBarRevealed = localBarRevealed;
             }
         }
         property bool mustShow: localBarRevealed
-            || (BarInteraction.isIslandInBarCenter && ((GlobalStates.islandInBarRevealed && GlobalStates.topShellHovered) || (GlobalStates.topShellRevealed && GlobalStates.topShellHovered)))
-            || (!BarInteraction.isIslandInBarCenter && (GlobalStates.topShellRevealed && GlobalStates.topShellHovered))
+            || (BarInteraction.isIslandInBarCenter && (GlobalStates.islandInBarRevealed || GlobalStates.topShellRevealed))
+            || (!BarInteraction.isIslandInBarCenter && GlobalStates.topShellRevealed)
         // BarInteraction, not the stored flag: a touch-first family forces auto-hide off
         // without rewriting the preference the user has saved.
         property real hiddenAmount: (BarInteraction.autoHide && !mustShow) ? Appearance.sizes.barHeight : 0

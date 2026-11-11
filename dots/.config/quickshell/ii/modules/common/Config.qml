@@ -6034,6 +6034,8 @@ Singleton {
                 // Grace period between the low-battery warning and the suspend itself; 0 suspends
                 // immediately.
                 property int suspendWarningSeconds: 30
+                // Auto-switch CPU mode to coding / performance when connected to AC power
+                property bool autoCodingOnAc: false
             }
 
             property JsonObject calendar: JsonObject {

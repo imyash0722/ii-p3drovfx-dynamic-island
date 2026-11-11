@@ -24,6 +24,7 @@ hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = 
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true })
 hl.bind("SUPER_L", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true, release = true })
 hl.bind("SUPER_R", hl.dsp.global("quickshell:workspaceNumber"), { ignore_mods = true, transparent = true, release = true })
+hl.bind("SUPER + Tab", hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
 hl.bind("SUPER + Alt_L", hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
 hl.bind("SUPER + Alt_R", hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
 hl.bind("ALT + SUPER_L", hl.dsp.global("quickshell:overviewWorkspacesToggle"), { description = "Shell: Toggle overview" })
@@ -90,11 +91,9 @@ hl.bind("Num_Lock", hl.dsp.global("quickshell:osdNumLock"),
 hl.bind("XF86TouchpadToggle", hl.dsp.exec_cmd(hyprScripts .. "/touchpad-toggle.sh"),
     { locked = true, ignore_mods = true, description = "Input: Toggle touchpad" })
 hl.bind("XF86TouchpadOn", hl.dsp.exec_cmd(hyprScripts .. "/touchpad-toggle.sh on"),
-    { locked = true }) -- # [hidden]
--- Note: XF86TouchpadOff is mapped to <FK23> in xkeyboard-config 2.49+, which conflicts with
--- the Copilot key (Super+Shift+F23 / XF86Assistant). Disabled to prevent hijacking the Copilot key.
--- hl.bind("XF86TouchpadOff", hl.dsp.exec_cmd(hyprScripts .. "/touchpad-toggle.sh off"),
---     { locked = true, ignore_mods = true }) -- # [hidden]
+    { locked = true, ignore_mods = true }) -- # [hidden]
+hl.bind("XF86TouchpadOff", hl.dsp.exec_cmd(hyprScripts .. "/touchpad-toggle.sh off"),
+    { locked = true, ignore_mods = true }) -- # [hidden]
 --##! Media
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%+ -l 1.5"),
     { locked = true, repeating = true, ignore_mods = true })
