@@ -20,3 +20,4 @@ services/SportsTrackerService.qml
 scripts/sports/*
 modules/ii/sidebarPolicies/sports/*
 scripts/tests/test_fn_keys_and_touchpad_contract.py
+modules/ii/dynamicIsland/core/IslandPolicy.qml

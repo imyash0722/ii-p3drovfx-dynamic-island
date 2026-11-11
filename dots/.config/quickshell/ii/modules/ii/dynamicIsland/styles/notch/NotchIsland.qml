@@ -1792,6 +1792,8 @@ Scope {
     Component.onCompleted: {
         Qt.callLater(root.updateBubbles);
         GlobalStates.islandWindow = win;
+        if (root.autoHide)
+            root.collapseToClock();
     }
     Component.onDestruction: {
         if (GlobalStates.islandWindow === win)

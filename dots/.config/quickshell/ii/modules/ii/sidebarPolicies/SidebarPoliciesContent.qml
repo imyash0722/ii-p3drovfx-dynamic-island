@@ -150,7 +150,6 @@ Item {
             component: media
         },
         {
-        {
             icon: "sports_and_outdoors",
             name: Translation.tr("Sports"),
             enabled: true,
