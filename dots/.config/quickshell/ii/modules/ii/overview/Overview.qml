@@ -43,7 +43,7 @@ Scope {
                     // the stable ShellScreen name and require a real focused
                     // monitor so only one surface can be active.
                     readonly property string screenName: modelData ? modelData.name : ""
-                    readonly property string focusedMonitorName: GlobalStates.overviewMonitor
+                    readonly property string focusedMonitorName: (GlobalStates.overviewMonitor !== undefined && GlobalStates.overviewMonitor !== null) ? GlobalStates.overviewMonitor : ""
                     property bool monitorIsFocused: Quickshell.screens.length <= 1
                         || (screenName !== "" && focusedMonitorName !== "" && screenName === focusedMonitorName)
                     property bool contentKeepAlive: false
@@ -91,11 +91,14 @@ Scope {
                         readonly property bool keepAlive: searchWidget.keepAlive
                         readonly property bool isBottomBar: !BarPlacement.vertical && BarPlacement.bottom
 
-                        readonly property var backgroundController: GlobalStates.overviewBackgroundControllerFor(root.screen?.name ?? "")
+                        readonly property var backgroundController: GlobalStates.overviewBackgroundControllerFor(root.screen ? root.screen.name : "")
                         // Real Gnome: compact thumbnails on top, the window picker
                         // in the free area under them.
                         readonly property bool realGnome: !!backgroundController && backgroundController.isRealGnome
-                        readonly property var monitorReserved: HyprlandData.monitors.find(m => m.name === root.screen?.name)?.reserved ?? [0, 0, 0, 0]
+                        readonly property var monitorReserved: {
+                            const mon = HyprlandData.monitors.find(m => m.name === (root.screen ? root.screen.name : ""));
+                            return (mon && mon.reserved) ? mon.reserved : [0, 0, 0, 0];
+                        }
                         // Screen coordinates -> window coordinates (the window
                         // starts at the usable area and reaches past it by 2 margins).
                         readonly property real screenOffsetX: root.margin * 2 - root.monitorReserved[0]
@@ -153,8 +156,8 @@ Scope {
                          */
                         function evaluateSearchPanelOwned() {
                             return GlobalStates.searchPanelActive
-                                || (searchWidget?.isAiMode ?? false)
-                                || (searchWidget?.isAnySpecialMode ?? false);
+                                || (searchWidget ? searchWidget.isAiMode : false)
+                                || (searchWidget ? searchWidget.isAnySpecialMode : false);
                         }
                         /**
                          * Panel ownership plus an ordinary query. Only the panel half
@@ -202,7 +205,7 @@ Scope {
                                 && !GlobalStates.searchOnlyMode
                                 && !GlobalStates.searchCenterMode
                                 && !Config.options.search.suggestions.enable
-                                && (Config?.options.overview.enable ?? true);
+                                && (Config && Config.options && Config.options.overview && Config.options.overview.enable !== undefined ? Config.options.overview.enable : true);
                         }
                         readonly property bool searchPanelOwned: root.evaluateSearchPanelOwned()
                         readonly property bool searchSurfaceOwned: root.evaluateSearchSurfaceOwned()
@@ -551,7 +554,7 @@ Scope {
                                 // The Dynamic Island hosts the picker when it owns search.
                                 active: root.realGnome && root.monitorIsFocused && !GlobalStates.islandOwnsSearch
                                 sourceComponent: RealGnomeWindowPicker {
-                                    screenName: root.screen?.name ?? ""
+                                    screenName: root.screen ? root.screen.name : ""
                                     offsetX: root.screenOffsetX
                                     offsetY: root.screenOffsetY
                                     shown: GlobalStates.overviewOpen && root.overviewShouldShow
@@ -561,10 +564,10 @@ Scope {
 
                             Loader { // Real Gnome workspace indicator
                                 active: root.realGnome && root.monitorIsFocused && !GlobalStates.islandOwnsSearch
-                                x: root.screenOffsetX + ((root.screen?.width ?? 0) - (item ? item.width : 0)) / 2
-                                y: root.screenOffsetY + (root.screen?.height ?? 0) - root.monitorReserved[3] - 20 - (item ? item.height / 2 : 0)
+                                x: root.screenOffsetX + ((root.screen ? root.screen.width : 0) - (item ? item.width : 0)) / 2
+                                y: root.screenOffsetY + (root.screen ? root.screen.height : 0) - root.monitorReserved[3] - 20 - (item ? item.height / 2 : 0)
                                 sourceComponent: RealGnomeWorkspaceIndicator {
-                                    screenName: root.screen?.name ?? ""
+                                    screenName: root.screen ? root.screen.name : ""
                                     shown: GlobalStates.overviewOpen && root.overviewShouldShow
                                         && !!root.backgroundController && root.backgroundController.progress > 0.6
                                 }
@@ -760,7 +763,7 @@ Scope {
                                     id: searchWidget
                                     surfaceAnimating: (root.animStyle !== "none") && (slideInParallel.running || slideOutParallel.running || root.backgroundAnimating)
                                     shadowOpacity: searchWidgetWrapper.slideOpacity
-                                    surfaceMonitorName: root.screen?.name ?? ""
+                                    surfaceMonitorName: root.screen ? root.screen.name : ""
                                     anchors.horizontalCenter: parent.horizontalCenter
                                 }
                             }
@@ -776,7 +779,7 @@ Scope {
                                 // opacity alone is what let the workspaces stay on
                                 // screen behind them.
                                 // Real Gnome has no grid: the plane and its neighbours are the workspaces.
-                                active: root.visible && !root.realGnome && !GlobalStates.searchOnlyMode && !GlobalStates.searchCenterMode && !Config.options.search.suggestions.enable && (Config?.options.overview.enable ?? true) && !root.searchPanelOwned
+                                active: root.visible && !root.realGnome && !GlobalStates.searchOnlyMode && !GlobalStates.searchCenterMode && !Config.options.search.suggestions.enable && (Config && Config.options && Config.options.overview && Config.options.overview.enable !== undefined ? Config.options.overview.enable : true) && !root.searchPanelOwned
                                 // Driven by the reveal progress alone. Gating this on
                                 // `overviewShouldShow` too meant a panel that opened
                                 // without ever changing the query could leave the grid
