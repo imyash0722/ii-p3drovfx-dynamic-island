@@ -228,6 +228,12 @@ Scope {
         function onIslandDashboardPageChanged() {
             root.consumeDashboardPage();
         }
+        function onToggleIslandDashboardRequested() {
+            if (root.dashboardActive)
+                root.dismissDashboard();
+            else
+                root.openDashboard();
+        }
     }
 
     /**
@@ -238,6 +244,8 @@ Scope {
      * is the same move a click away makes.
      */
     function openDashboard() {
+        root.preferClockFace = false;
+        root.expandSuppressed = false;
         root.dashboardRequested = true;
     }
 

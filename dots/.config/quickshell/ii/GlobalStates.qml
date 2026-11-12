@@ -1095,6 +1095,12 @@ Singleton {
         collapseIslandRequested();
     }
 
+    // Dynamic Island widgets dashboard coordination
+    signal toggleIslandDashboardRequested()
+    function toggleDynamicIslandDashboard(): void {
+        toggleIslandDashboardRequested();
+    }
+
     // The live docks, newest last: the Settings dock preview reads the first one's
     // model (`modelItems`) and helpers instead of deriving the dock's contents again.
     property var dockContents: []
@@ -3661,6 +3667,15 @@ Singleton {
         description: "Closes left sidebar on press"
         onPressed: {
             root.sidebarLeftOpen = false;
+        }
+    }
+
+    // Dynamic Island Global Shortcuts
+    GlobalShortcut {
+        name: "dynamicIslandDashboardToggle"
+        description: "Toggles the dynamic island widgets dashboard"
+        onPressed: {
+            root.toggleDynamicIslandDashboard();
         }
     }
 
