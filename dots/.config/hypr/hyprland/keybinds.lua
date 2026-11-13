@@ -42,10 +42,8 @@ hl.bind("SUPER + ALT + A", hl.dsp.global("quickshell:sidebarLeftToggleDetach"))
 hl.bind("SUPER + B", hl.dsp.global("quickshell:sidebarLeftToggle"))
 hl.bind("SUPER + O", hl.dsp.global("quickshell:sidebarLeftToggle"))
 hl.bind("SUPER + N", hl.dsp.global("quickshell:sidebarRightToggle"), { description = "Shell: Toggle right sidebar" })
--- Dynamic Island: Copilot key toggles widgets dashboard (emits Super+Shift+F23, XF86CoPilot, or F23)
+-- Dynamic Island: Copilot key toggles widgets dashboard (hardware emits Super+Shift+F23 or standalone F23)
 hl.bind("SUPER + SHIFT + F23", hl.dsp.global("quickshell:dynamicIslandDashboardToggle"),
-    { description = "Dynamic Island: Toggle widgets dashboard" })
-hl.bind("XF86CoPilot", hl.dsp.global("quickshell:dynamicIslandDashboardToggle"),
     { description = "Dynamic Island: Toggle widgets dashboard" })
 hl.bind("F23", hl.dsp.global("quickshell:dynamicIslandDashboardToggle"),
     { description = "Dynamic Island: Toggle widgets dashboard" })

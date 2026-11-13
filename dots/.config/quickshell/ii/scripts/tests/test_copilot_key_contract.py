@@ -3,9 +3,9 @@
 Validates that:
 1. dots/.config/hypr/hyprland/keybinds.lua binds Copilot key hardware combinations:
    - SUPER + SHIFT + F23 (standard Microsoft/OEM hardware keycode)
-   - XF86CoPilot (Linux/udev keysym)
    - F23 (firmware/BIOS keysym)
-   all triggering quickshell:dynamicIslandDashboardToggle with description
+   and ensures unknown keysyms like XF86CoPilot are excluded to prevent Hyprland Lua errors.
+   All valid combinations trigger quickshell:dynamicIslandDashboardToggle with description
    "Dynamic Island: Toggle widgets dashboard".
 2. dots/.config/quickshell/ii/GlobalStates.qml defines:
    - signal toggleIslandDashboardRequested()
@@ -39,13 +39,10 @@ class CopilotKeyContractTests(unittest.TestCase):
             self.keybinds,
         )
         self.assertIn(
-            'hl.bind("XF86CoPilot", hl.dsp.global("quickshell:dynamicIslandDashboardToggle")',
-            self.keybinds,
-        )
-        self.assertIn(
             'hl.bind("F23", hl.dsp.global("quickshell:dynamicIslandDashboardToggle")',
             self.keybinds,
         )
+        self.assertNotIn("XF86CoPilot", self.keybinds)
         self.assertIn(
             'description = "Dynamic Island: Toggle widgets dashboard"',
             self.keybinds,
