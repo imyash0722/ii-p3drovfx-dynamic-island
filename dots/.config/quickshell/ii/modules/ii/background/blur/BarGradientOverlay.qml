@@ -32,9 +32,6 @@ Item {
     readonly property bool shouldShow: Config.options.bar.barBackgroundStyle === 0
         && Config.options.bar.transparentGlow
         && GlobalStates.barOpen
-    readonly property bool shouldShow: Config.options.bar.barBackgroundStyle === 0
-        && Config.options.bar.transparentGlow
-        && GlobalStates.barOpen
         && !barOverlayRoot.lockLook
         && !isBarHidden
 

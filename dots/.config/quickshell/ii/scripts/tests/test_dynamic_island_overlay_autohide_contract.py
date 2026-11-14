@@ -61,6 +61,7 @@ class DynamicIslandOverlayAutohideContractTests(unittest.TestCase):
         self.assertIn("barHiddenProgress", BAR_GRADIENT)
         self.assertIn("isBarHidden", BAR_GRADIENT)
         self.assertIn("1.0 - barOverlayRoot.barHiddenProgress", BAR_GRADIENT)
+        self.assertEqual(BAR_GRADIENT.count("readonly property bool shouldShow:"), 1)
 
     def test_depth_cutout_layer_checks_bar_hidden(self):
         self.assertIn("!GlobalStates.isBarHidden(root.screenName)", DEPTH_CUTOUT)
