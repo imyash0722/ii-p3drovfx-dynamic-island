@@ -216,15 +216,16 @@ Singleton {
 
     function toggleLightDark() {
         const currentlyDark = Appearance.m3colors.darkmode;
-        if (Config.options?.background?.useSeparateLightModeWallpaper) {
+        const background = Config.options?.background;
+        const hasSeparateLightWall = background?.useSeparateLightModeWallpaper
+            && background.lightModeWallpaperPath
+            && background.lightModeWallpaperPath !== "";
+        if (hasSeparateLightWall) {
             if (currentlyDark) {
-                const lightPath = Config.options.background.lightModeWallpaperPath;
-                if (lightPath && lightPath !== "") {
-                    Wallpapers.applyLightModeWallpaper(lightPath);
-                    return;
-                }
+                Wallpapers.applyLightModeWallpaper(background.lightModeWallpaperPath);
+                return;
             } else {
-                const darkPath = Config.options.background.wallpaperPath;
+                const darkPath = background.wallpaperPath;
                 if (darkPath && darkPath !== "") {
                     Wallpapers.apply(darkPath, true);
                     return;

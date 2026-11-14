@@ -21,7 +21,10 @@ RowLayout {
         if (Appearance.m3colors.darkmode === dark)
             return;
         const background = Config.options?.background;
-        if (background?.useSeparateLightModeWallpaper) {
+        const hasSeparateLightWall = background?.useSeparateLightModeWallpaper
+            && background.lightModeWallpaperPath
+            && background.lightModeWallpaperPath !== "";
+        if (hasSeparateLightWall) {
             const path = dark ? background.wallpaperPath : background.lightModeWallpaperPath;
             if (path && path !== "") {
                 if (dark)

@@ -198,6 +198,7 @@ if args.all_previews:
             "tertiary": m_colors.get("tertiary", "transparent")
         }
 
+    is_stale = False
     if args.request_token and args.request_value:
         try:
             with open(args.request_token, 'r') as f:
@@ -213,18 +214,18 @@ if args.all_previews:
                 "Skipping stale all-previews write (superseded by a newer wallpaper change)",
                 file=sys.stderr,
             )
-            sys.exit(75)
 
-    try:
-        out_dir = os.path.dirname(args.all_previews)
-        if out_dir:
-            os.makedirs(out_dir, exist_ok=True)
-        tmp_path = args.all_previews + ".tmp"
-        with open(tmp_path, 'w') as f:
-            json.dump(previews, f, indent=2)
-        os.replace(tmp_path, args.all_previews)
-    except Exception as e:
-        print(f"Error saving all previews: {e}")
+    if not is_stale:
+        try:
+            out_dir = os.path.dirname(args.all_previews)
+            if out_dir:
+                os.makedirs(out_dir, exist_ok=True)
+            tmp_path = args.all_previews + ".tmp"
+            with open(tmp_path, 'w') as f:
+                json.dump(previews, f, indent=2)
+            os.replace(tmp_path, args.all_previews)
+        except Exception as e:
+            print(f"Error saving all previews: {e}")
 
 if args.scheme == 'scheme-auto':
     args.scheme = resolve_auto_scheme(args.path)

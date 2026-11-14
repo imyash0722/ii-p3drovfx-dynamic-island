@@ -75,8 +75,12 @@ Singleton {
 
     function enableDarkMode() {
         if (!Appearance.m3colors.darkmode) {
-            if (Config.options?.background?.useSeparateLightModeWallpaper) {
-                const darkPath = Config.options.background.wallpaperPath;
+            const background = Config.options?.background;
+            const hasSeparateLightWall = background?.useSeparateLightModeWallpaper
+                && background.lightModeWallpaperPath
+                && background.lightModeWallpaperPath !== "";
+            if (hasSeparateLightWall) {
+                const darkPath = background.wallpaperPath;
                 if (darkPath && darkPath !== "") {
                     Wallpapers.apply(darkPath, true);
                     return;
@@ -88,12 +92,13 @@ Singleton {
 
     function disableDarkMode() {
         if (Appearance.m3colors.darkmode) {
-            if (Config.options?.background?.useSeparateLightModeWallpaper) {
-                const lightPath = Config.options.background.lightModeWallpaperPath;
-                if (lightPath && lightPath !== "") {
-                    Wallpapers.applyLightModeWallpaper(lightPath);
-                    return;
-                }
+            const background = Config.options?.background;
+            const hasSeparateLightWall = background?.useSeparateLightModeWallpaper
+                && background.lightModeWallpaperPath
+                && background.lightModeWallpaperPath !== "";
+            if (hasSeparateLightWall) {
+                Wallpapers.applyLightModeWallpaper(background.lightModeWallpaperPath);
+                return;
             }
             Quickshell.execDetached([Directories.wallpaperSwitchScriptPath, "--mode", "light", "--noswitch"]);
         }

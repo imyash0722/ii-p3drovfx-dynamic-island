@@ -99,7 +99,14 @@ Singleton {
             root.connectTailscale()
     }
     function buildUpCommand(): list<string> {
-        const args = ["tailscale", root.active ? "set" : "up", "--accept-dns=" + (root.acceptDns ? "true" : "false"), "--shields-up=" + (root.shieldsUp ? "true" : "false"), "--ssh=" + (root.sshEnabled ? "true" : "false")]
+        const args = ["tailscale", root.active ? "set" : "up"]
+        if (!root.active) {
+            args.push("--reset")
+            args.push("--timeout=8s")
+        }
+        args.push("--accept-dns=" + (root.acceptDns ? "true" : "false"))
+        args.push("--shields-up=" + (root.shieldsUp ? "true" : "false"))
+        args.push("--ssh=" + (root.sshEnabled ? "true" : "false"))
         if (root.advertiseRoutes.length) args.push("--advertise-routes=" + root.advertiseRoutes.join(","))
         else if (root.active) args.push("--advertise-routes=")
         if (root.advertiseExitNode) args.push("--advertise-exit-node")
@@ -118,14 +125,14 @@ Singleton {
     function disconnectTailscale(): void { if (!root.available) { root.setError(Translation.tr("Tailscale is unavailable")); return } root.loading = true; root.statusText = Translation.tr("Disconnecting…"); root.errorMessage = ""; root.enqueue("down", ["tailscale", "down"], null) }
     function logout(): void { if (!root.available) { root.setError(Translation.tr("Tailscale is unavailable")); return } root.loading = true; root.errorMessage = ""; root.enqueue("logout", ["tailscale", "logout"], null) }
     function openLoginUrl(): void { if (root.loginUrl) Quickshell.execDetached(["xdg-open", root.loginUrl]); else root.setError(Translation.tr("No Tailscale login URL is available")) }
-    function setExitNode(nodeNameOrIp: string): void { root.currentExitNode = nodeNameOrIp || ""; if (Config.ready) Config.options.tailscale.exitNode = root.currentExitNode; if (root.backendState === "Running") root.connectTailscale() }
+    function setExitNode(nodeNameOrIp: string): void { root.currentExitNode = nodeNameOrIp || ""; if (Config.ready) Config.options.tailscale.exitNode = root.currentExitNode; if (root.active) root.enqueue("set", ["tailscale", "set", "--exit-node=" + root.currentExitNode], null) }
     function netcheck(): void { if (!root.diagnosticsEnabled) { root.setError(Translation.tr("Tailscale diagnostics are disabled")); return } if (!root.available) { root.setError(Translation.tr("Tailscale is unavailable")); return } root.netcheckLoading = true; root.enqueue("netcheck", ["tailscale", "netcheck"], null) }
-    function setAcceptDns(value: bool): void { root.acceptDns = value; if (Config.ready) Config.options.tailscale.acceptDns = value; if (root.active) root.connectTailscale() }
-    function setShieldsUp(value: bool): void { root.shieldsUp = value; if (Config.ready) Config.options.tailscale.shieldsUp = value; if (root.active) root.connectTailscale() }
+    function setAcceptDns(value: bool): void { root.acceptDns = value; if (Config.ready) Config.options.tailscale.acceptDns = value; if (root.active) root.enqueue("set", ["tailscale", "set", "--accept-dns=" + (value ? "true" : "false")], null) }
+    function setShieldsUp(value: bool): void { root.shieldsUp = value; if (Config.ready) Config.options.tailscale.shieldsUp = value; if (root.active) root.enqueue("set", ["tailscale", "set", "--shields-up=" + (value ? "true" : "false")], null) }
     function operationError(stderr: string, fallback: string): string {
         const message = String(stderr || "").trim()
-        if (/prefs write access denied|Access denied.*prefs/i.test(message))
-            return Translation.tr("Tailscale needs an operator. Run once: sudo tailscale set --operator=$USER")
+        if (/prefs write access denied|checkprefs access denied|Access denied.*prefs|needs an operator|--operator/i.test(message))
+            return Translation.tr("Tailscale needs operator access. Run once: sudo tailscale set --operator=$USER")
         return message || fallback
     }
     function requestDaemon(action: string): void {
@@ -134,9 +141,9 @@ Singleton {
         daemonProc.command = ["pkexec", "systemctl", action, "tailscaled"]
         daemonProc.running = true
     }
-    function setSshEnabled(value: bool): void { root.sshEnabled = value; if (Config.ready) Config.options.tailscale.ssh = value; if (root.active) root.connectTailscale() }
-    function setAdvertiseRoutes(routes: list<string>): void { root.advertiseRoutes = routes; if (Config.ready) Config.options.tailscale.advertiseRoutes = routes; if (root.active) root.connectTailscale() }
-    function setAdvertiseExitNode(value: bool): void { root.advertiseExitNode = value; if (Config.ready) Config.options.tailscale.advertiseExitNode = value; if (root.active) root.connectTailscale() }
+    function setSshEnabled(value: bool): void { root.sshEnabled = value; if (Config.ready) Config.options.tailscale.ssh = value; if (root.active) root.enqueue("set", ["tailscale", "set", "--ssh=" + (value ? "true" : "false")], null) }
+    function setAdvertiseRoutes(routes: list<string>): void { root.advertiseRoutes = routes; if (Config.ready) Config.options.tailscale.advertiseRoutes = routes; if (root.active) root.enqueue("set", ["tailscale", "set", "--advertise-routes=" + routes.join(",")], null) }
+    function setAdvertiseExitNode(value: bool): void { root.advertiseExitNode = value; if (Config.ready) Config.options.tailscale.advertiseExitNode = value; if (root.active) root.enqueue("set", ["tailscale", "set", "--advertise-exit-node=" + (value ? "true" : "false")], null) }
     function pingPeer(peerIp: string, callback: var): void { if (!peerIp || !root.available) return; root.loading = true; root.enqueue("ping", ["tailscale", "ping", "-c", "1", peerIp], { peer: peerIp, callback: callback }) }
     function refreshDiagnostics(): void { root.netcheck() }
     function parseLoginUrl(text: string): string { const match = String(text || "").match(/https?:\/\/[^\s\"']+/); return match ? match[0].replace(/[).,]+$/, "") : "" }
@@ -155,7 +162,16 @@ Singleton {
         const exitStatus = data.ExitNodeStatus || {}; if (exitStatus.Online && (exitStatus.HostName || exitStatus.ID)) selectedExit = exitStatus.HostName || exitStatus.ID
         root.peers = peersOut; root.exitNodes = exits; root.currentExitNode = selectedExit
         if (!selectedExit && Config.ready && Config.options.tailscale.exitNode) Config.options.tailscale.exitNode = ""
-        const health = JSON.stringify(data.Health || ""); root.permissionState = /permission|root|access denied/i.test(health) ? "permission-denied" : (root.backendState === "NeedsLogin" ? "needs-login" : "ok")
+        const healthList = Array.isArray(data.Health) ? data.Health : []
+        const health = JSON.stringify(healthList)
+        root.permissionState = /permission|root|access denied/i.test(health) ? "permission-denied" : (root.backendState === "NeedsLogin" ? "needs-login" : "ok")
+        if (healthList.length > 0) {
+            root.diagnosticsText = healthList.join("\n")
+            if (!root.active && !root.errorMessage) {
+                const blocked = healthList.find(h => /blocking|unable to connect|connection reset/i.test(h))
+                if (blocked) root.errorMessage = blocked
+            }
+        }
         if (root.backendState === "Running") root.statusText = root.nodeName || Translation.tr("Connected"); else if (root.backendState === "NeedsLogin") root.statusText = Translation.tr("Needs Login"); else if (root.backendState === "Stopped") root.statusText = Translation.tr("Stopped"); else root.statusText = root.backendState
         root.statusUpdated()
     }
@@ -170,6 +186,7 @@ Singleton {
             if (kind === "probe") { root.available = exitCode === 0 && out.trim().length > 0; if (root.available) root.enqueue("status", ["tailscale", "status", "--json"], null); else { root.backendState = "NoState"; root.statusText = Translation.tr("Unavailable"); root.refreshQueued = false; root.loading = false } }
             else if (kind === "status") { root.parseStatus(out, err, exitCode); if (exitCode !== 0 && root.errorMessage && !root.loginUrl) root.errorOccurred(root.errorMessage); root.enqueue("finish", ["true"], null) }
             else if (kind === "finish") { root.refreshQueued = false; root.loading = false; if (root.autoConnect && !root.autoConnectAttempted && !root.active && root.backendState !== "NeedsLogin") { root.autoConnectAttempted = true; root.connectTailscale() } }
+            else if (kind === "set") { if (exitCode !== 0) root.setError(root.operationError(err || out, Translation.tr("Failed to update Tailscale settings"))); else root.refresh() }
             else if (kind === "down") { if (exitCode !== 0) root.setError(root.operationError(err, Translation.tr("Tailscale down failed"))); else { if (root.stopDaemonWhenDisabled) root.requestDaemon("stop"); else root.refresh() } }
             else if (kind === "logout") { if (exitCode !== 0) root.setError(root.operationError(err, Translation.tr("Tailscale logout failed"))); else { root.loginUrl = ""; root.refresh() } }
             else if (kind === "up") { if (exitCode !== 0) { const url = root.parseLoginUrl(out + "\n" + err); if (url) { root.loginUrl = url; root.loginRequired(url) }; root.setError(root.operationError(err || out, Translation.tr("Tailscale up failed"))) } else root.refresh() }

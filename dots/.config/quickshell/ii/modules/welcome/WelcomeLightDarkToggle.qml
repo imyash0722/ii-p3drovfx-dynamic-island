@@ -46,23 +46,23 @@ RowLayout {
         colRipple: Appearance.colors.colLayer2Active
 
         onClicked: {
-            if (Config.options?.background?.useSeparateLightModeWallpaper) {
+            const background = Config.options?.background;
+            const hasSeparateLightWall = background?.useSeparateLightModeWallpaper
+                && background.lightModeWallpaperPath
+                && background.lightModeWallpaperPath !== "";
+            if (hasSeparateLightWall) {
                 if (dark) {
-                    const darkPath = Config.options.background.wallpaperPath;
-                    if (darkPath && darkPath !== "")
+                    const darkPath = background.wallpaperPath;
+                    if (darkPath && darkPath !== "") {
                         Wallpapers.apply(darkPath, true);
-                    else
-                        Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --mode dark --noswitch`]);
+                        return;
+                    }
                 } else {
-                    const lightPath = Config.options.background.lightModeWallpaperPath;
-                    if (lightPath && lightPath !== "")
-                        Wallpapers.applyLightModeWallpaper(lightPath);
-                    else
-                        Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --mode light --noswitch`]);
+                    Wallpapers.applyLightModeWallpaper(background.lightModeWallpaperPath);
+                    return;
                 }
-            } else {
-                Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --mode ${dark ? "dark" : "light"} --noswitch`]);
             }
+            Quickshell.execDetached(["bash", "-c", `${Directories.wallpaperSwitchScriptPath} --mode ${dark ? "dark" : "light"} --noswitch`]);
         }
 
         StyledToolTip {

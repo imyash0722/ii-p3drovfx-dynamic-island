@@ -160,7 +160,7 @@ os.rename(tmp_path, output_path)
 
 apply_term() {
   apply_anyterm &
-  apply_kitty &
+  apply_kitty
 }
 
 # Check if terminal theming is enabled in config
@@ -169,7 +169,7 @@ if [ -f "$CONFIG_FILE" ]; then
   enable_terminal=$(jq -r '.appearance.wallpaperTheming.enableTerminal' "$CONFIG_FILE")
   enable_openrgb=$(jq -r '.appearance.openrgb.enable' "$CONFIG_FILE")
   if [ "$enable_terminal" = "true" ]; then
-    apply_term &
+    apply_term
   fi
   if [ "$enable_openrgb" = "true" ]; then
     openrgb_duration=$(jq -r '.appearance.openrgb.fadeDuration' "$CONFIG_FILE")
@@ -180,7 +180,7 @@ if [ -f "$CONFIG_FILE" ]; then
   fi
 else
   echo "Config file not found at $CONFIG_FILE. Applying terminal theming by default."
-  apply_term &
+  apply_term
 fi
 
 # apply_qt & # Qt theming is already handled by kde-material-colors
