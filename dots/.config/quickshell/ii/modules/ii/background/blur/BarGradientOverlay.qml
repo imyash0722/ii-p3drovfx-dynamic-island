@@ -6,6 +6,9 @@ import qs.modules.common
 
 Item {
     id: barOverlayRoot
+    // The lock's look on this screen (GlobalStates.lockLookFor), handed in by
+    // the wallpaper that owns this treatment.
+    property bool lockLook: GlobalStates.lockLookActive
     anchors.fill: parent
 
     // The source must use this overlay's screen coordinate space. Keeping the
@@ -29,7 +32,10 @@ Item {
     readonly property bool shouldShow: Config.options.bar.barBackgroundStyle === 0
         && Config.options.bar.transparentGlow
         && GlobalStates.barOpen
-        && !GlobalStates.lockLookActive
+    readonly property bool shouldShow: Config.options.bar.barBackgroundStyle === 0
+        && Config.options.bar.transparentGlow
+        && GlobalStates.barOpen
+        && !barOverlayRoot.lockLook
         && !isBarHidden
 
     Item {

@@ -435,13 +435,13 @@ PanelWindow {
 
     readonly property bool verticalParallax: !videoEffectsDisabled && ((Config.options.background.parallax.autoVertical && wallpaperBoxHeight > wallpaperBoxWidth) || Config.options.background.parallax.vertical)
     // Colors
-    property bool shouldBlur: (GlobalStates.lockLookActive && Config.options.lock.blur.enable)
+    property bool shouldBlur: (GlobalStates.lockLookFor(bgRoot.editScreenName) && Config.options.lock.blur.enable)
     property color dominantColor: Appearance.colors.colPrimary // Default, to be changed
     property bool dominantColorIsDark: dominantColor.hslLightness < 0.5
     property color colText: {
         if (wallpaperSafetyTriggered)
             return CF.ColorUtils.mix(Appearance.colors.colOnLayer0, Appearance.colors.colPrimary, 0.75);
-        return (GlobalStates.lockLookActive && shouldBlur) ? Appearance.colors.colOnLayer0 : CF.ColorUtils.colorWithLightness(Appearance.colors.colPrimary, (dominantColorIsDark ? 0.8 : 0.12));
+        return (GlobalStates.lockLookFor(bgRoot.editScreenName) && shouldBlur) ? Appearance.colors.colOnLayer0 : CF.ColorUtils.colorWithLightness(Appearance.colors.colPrimary, (dominantColorIsDark ? 0.8 : 0.12));
     }
     // Video Wallpaper Parallax via mpv IPC
     readonly property real videoPanX: (0.5 - parallax.effectiveValueX) * 0.08
@@ -862,6 +862,7 @@ PanelWindow {
         BarGradientOverlay {
             screenName: bgRoot.screen ? bgRoot.screen.name : ""
             sourceItem: wallpaperImage
+            lockLook: GlobalStates.lockLookFor(bgRoot.editScreenName)
             screenWidth: bgRoot.screen.width
             screenHeight: bgRoot.screen.height
         }

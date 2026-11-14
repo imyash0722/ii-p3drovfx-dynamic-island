@@ -38,14 +38,23 @@ Item {
     // monitor from the config entry (see WidgetPlacement); the widgetX/widgetY
     // roles only carry the legacy, unforked coordinates.
     property string monitorName: ""
+    // Edit Mode's lock preview is the edited screen's alone (GlobalStates.lockLookFor).
+    readonly property bool editLockHere: GlobalStates.editLockLayout
+        && (delegateRoot.monitorName === "" || GlobalStates.editModeMonitor === delegateRoot.monitorName)
+    readonly property bool lockLookHere: GlobalStates.screenLocked || delegateRoot.editLockHere
     // While the lock look is up (a real lock or Edit Mode's Lockscreen tab)
     // the lock fork is read, which follows the desktop until forked.
     readonly property var placement: {
         const list = Config.options.background.activeWidgets;
-        return WidgetPlacement.resolveIn(list, delegateRoot.instanceId, delegateRoot.monitorName, GlobalStates.lockLookActive, delegateRoot.screenWidth, delegateRoot.screenHeight);
+        return WidgetPlacement.resolveIn(list, delegateRoot.instanceId, delegateRoot.monitorName, delegateRoot.lockLookHere, delegateRoot.screenWidth, delegateRoot.screenHeight);
     }
     // The entry itself, for the flags that are not placement (pinned).
     readonly property var configEntry: WidgetPlacement.findEntry(Config.options.background.activeWidgets, delegateRoot.instanceId)
+    // Every screen's Repeater walks the shared model; only the screens this copy
+    // is assigned to build its widget (WidgetPlacement.showsOn). The others keep
+    // an empty, invisible delegate.
+    readonly property bool onThisMonitor: WidgetPlacement.showsOn(delegateRoot.configEntry, delegateRoot.monitorName)
+    visible: delegateRoot.onThisMonitor
     required property real wallpaperScale
     required property bool wallpaperSafetyTriggered
     required property bool lockAnimationActive
@@ -2386,7 +2395,8 @@ Item {
         // it is the ones the lock shows. Without the tab named here a
         // lock-only widget added from it is written to the config and never
         // built, so the tab looks like it ignored the click.
-        readonly property bool lockLayout: delegateRoot.lockAnimationActive || GlobalStates.editLockLayout
+        readonly property bool lockLayout: delegateRoot.lockAnimationActive || delegateRoot.editLockHere
+        active: delegateRoot.onThisMonitor && (widgetLoader.keepAlive || widgetLoader.shown)
         shown: !widgetLoader.lockLayout ? (delegateRoot.lockBehavior !== "lockOnly")
             : (delegateRoot.lockBehavior === "center" || delegateRoot.lockBehavior === "keep" || delegateRoot.lockBehavior === "custom"
                 || delegateRoot.lockBehavior === "lockOnly")
