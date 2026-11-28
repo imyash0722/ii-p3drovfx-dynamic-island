@@ -18,6 +18,10 @@ import argparse
 from datetime import datetime, timezone, timedelta
 import urllib.request
 import urllib.error
+import urllib.parse
+
+def _stat_str(value, default=""):
+    return default if value is None else str(value)
 
 USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 QuickshellSports/1.0"
 IST_OFFSET = timedelta(hours=5, minutes=30)
@@ -403,7 +407,7 @@ def fetch_f1_latest_session():
                 pos = int(res.get("position", 0))
                 full_name = f"{drv.get('givenName', '')} {drv.get('familyName', '')}".strip()
                 team_name = cons.get("name", "")
-                time_obj = res.get("Time", {})
+                time_obj = res.get("Time") or {}
                 gap_str = time_obj.get("time", res.get("status", ""))
                 top_results.append({
                     "pos": pos,
@@ -595,7 +599,9 @@ def fetch_cricket_scorecard(league_id, event_id):
     if not league_id or not event_id:
         return {"innings": [], "error": "Missing match identifier"}
 
-    url = f"https://site.api.espn.com/apis/site/v2/sports/cricket/{league_id}/summary?event={event_id}"
+    safe_league = urllib.parse.quote(str(league_id).strip(), safe="")
+    safe_event = urllib.parse.quote(str(event_id).strip(), safe="")
+    url = f"https://site.api.espn.com/apis/site/v2/sports/cricket/{safe_league}/summary?event={safe_event}"
     data = fetch_json(url, timeout=10)
     if not data:
         return {"innings": [], "error": "Unable to load scorecard"}
@@ -623,29 +629,29 @@ def fetch_cricket_scorecard(league_id, event_id):
 
         entry = innings_map[inn_num]
         if headline == "Batting":
-            entry["batting_team"] = mc.get("teamName", "")
+            entry["batting_team"] = mc.get("teamName") or ""
             entry["runs"] = mc.get("runs") or ""
             entry["total"] = mc.get("total") or ""
             entry["extras"] = mc.get("extras") or ""
             for p in mc.get("playerDetails", []):
                 entry["batting"].append({
-                    "name": p.get("playerName", ""),
-                    "dismissal": p.get("dismissal", ""),
-                    "runs": str(p.get("runs", "0")),
-                    "balls": str(p.get("ballsFaced", "0")),
-                    "fours": str(p.get("fours", "0")),
-                    "sixes": str(p.get("sixes", "0"))
+                    "name": p.get("playerName") or "",
+                    "dismissal": p.get("dismissal") or "",
+                    "runs": _stat_str(p.get("runs"), "0"),
+                    "balls": _stat_str(p.get("ballsFaced"), "0"),
+                    "fours": _stat_str(p.get("fours"), "0"),
+                    "sixes": _stat_str(p.get("sixes"), "0")
                 })
         elif headline == "Bowling":
-            entry["bowling_team"] = mc.get("teamName", "")
+            entry["bowling_team"] = mc.get("teamName") or ""
             for p in mc.get("playerDetails", []):
                 entry["bowling"].append({
-                    "name": p.get("playerName", ""),
-                    "overs": str(p.get("overs", "0")),
-                    "maidens": str(p.get("maidens", "0")),
-                    "runs": str(p.get("conceded", "0")),
-                    "wickets": str(p.get("wickets", "0")),
-                    "econ": str(p.get("economyRate", "0.00"))
+                    "name": p.get("playerName") or "",
+                    "overs": _stat_str(p.get("overs"), "0"),
+                    "maidens": _stat_str(p.get("maidens"), "0"),
+                    "runs": _stat_str(p.get("conceded"), "0"),
+                    "wickets": _stat_str(p.get("wickets"), "0"),
+                    "econ": _stat_str(p.get("economyRate"), "0.00")
                 })
 
     return {

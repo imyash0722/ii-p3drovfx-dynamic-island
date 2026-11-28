@@ -54,7 +54,7 @@ Rectangle {
 
             StyledText {
                 Layout.fillWidth: true
-                text: root.nextRace ? root.nextRace.race_name.toUpperCase() : Translation.tr("FORMULA 1")
+                text: (root.nextRace && root.nextRace.race_name) ? root.nextRace.race_name.toUpperCase() : Translation.tr("FORMULA 1")
                 font.family: root.timingFont
                 font.pixelSize: Appearance.font.pixelSize.normal
                 font.weight: Font.Bold
@@ -142,7 +142,7 @@ Rectangle {
                     Item { Layout.preferredWidth: 4 }
                     StyledText { text: "DRIVER"; font.family: root.timingFont; font.pixelSize: Appearance.font.pixelSize.smallest; font.weight: Font.Bold; color: Appearance.colors.colOnSurfaceVariant; Layout.preferredWidth: 46 }
                     StyledText { text: "TEAM"; font.family: root.timingFont; font.pixelSize: Appearance.font.pixelSize.smallest; font.weight: Font.Bold; color: Appearance.colors.colOnSurfaceVariant; Layout.fillWidth: true }
-                    StyledText { text: "TIME / GAP"; font.family: root.timingFont; font.pixelSize: Appearance.font.pixelSize.smallest; font.weight: Font.Bold; color: Appearance.colors.colOnSurfaceVariant; horizontalAlignment: Text.AlignRight; Layout.preferredWidth: 78 }
+                    StyledText { text: "TIME / GAP"; font.family: root.timingFont; font.pixelSize: Appearance.font.pixelSize.smallest; font.weight: Font.Bold; color: Appearance.colors.colOnSurfaceVariant; horizontalAlignment: Text.AlignRight; Layout.preferredWidth: 86 }
                 }
 
                 Rectangle {
@@ -188,6 +188,7 @@ Rectangle {
                                 font.letterSpacing: 0.8
                                 color: Appearance.colors.colOnSurface
                                 Layout.preferredWidth: 46
+                                elide: Text.ElideRight
                             }
 
                             StyledText {
@@ -206,7 +207,8 @@ Rectangle {
                                 font.weight: index === 0 ? Font.Bold : Font.Medium
                                 color: index === 0 ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
                                 horizontalAlignment: Text.AlignRight
-                                Layout.preferredWidth: 78
+                                Layout.preferredWidth: 86
+                                elide: Text.ElideRight
                             }
                         }
                     }
@@ -294,6 +296,7 @@ Rectangle {
                                 font.letterSpacing: 0.8
                                 color: Appearance.colors.colOnSurface
                                 Layout.preferredWidth: 46
+                                elide: Text.ElideRight
                             }
 
                             StyledText {
@@ -394,7 +397,7 @@ Rectangle {
 
                             StyledText {
                                 Layout.fillWidth: true
-                                text: modelData.team.toUpperCase()
+                                text: (modelData.team || "").toUpperCase()
                                 font.family: root.timingFont
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 font.weight: Font.Bold
@@ -437,7 +440,7 @@ Rectangle {
                     spacing: 8
 
                     StyledText {
-                        text: root.nextRace ? root.nextRace.circuit.toUpperCase() : Translation.tr("SCHEDULE")
+                        text: (root.nextRace && root.nextRace.circuit) ? root.nextRace.circuit.toUpperCase() : Translation.tr("SCHEDULE")
                         font.family: root.timingFont
                         font.pixelSize: Appearance.font.pixelSize.small
                         font.weight: Font.Bold
@@ -473,7 +476,7 @@ Rectangle {
                             Layout.fillWidth: true
 
                             StyledText {
-                                text: modelData.name.toUpperCase()
+                                text: (modelData.name || "").toUpperCase()
                                 font.family: root.timingFont
                                 font.pixelSize: Appearance.font.pixelSize.small
                                 font.weight: modelData.is_past ? Font.Normal : Font.Bold

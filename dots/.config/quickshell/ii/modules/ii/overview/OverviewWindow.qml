@@ -149,7 +149,15 @@ Item { // Window
 
     // We have to disable animations in the first frame or else some strange animations shows up
     property bool initialized: false
-    Component.onCompleted: Qt.callLater(() => root.initialized = true)
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            if (typeof root === "undefined" || !root)
+                return;
+            root.initialized = true;
+            if (root.needsPreviewRetry && root.previewRetryCount < 5)
+                previewRetryTimer.restart();
+        });
+    }
     readonly property bool animate: root.initialized && !root.animationsDisabled
 
     // Re-capture the frozen ScreencopyView whenever HyprlandData refetches
@@ -213,6 +221,8 @@ Item { // Window
             root.previewRetryCount += 1;
             root.previewRetryReset = true;
             Qt.callLater(() => {
+                if (typeof root === "undefined" || !root || !windowPreview)
+                    return;
                 root.previewRetryReset = false;
                 if (root.visible && !windowPreview.live && root.toplevel && windowPreview.captureSource)
                     windowPreview.captureFrame();

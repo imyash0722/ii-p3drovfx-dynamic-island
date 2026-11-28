@@ -30,19 +30,26 @@ Singleton {
     property var selectedCricketMatch: null
     property var cricketScorecard: null
     property bool isLoadingScorecard: false
+    property int _scorecardRequestId: 0
 
     function openCricketScorecard(matchData) {
         if (!matchData) return;
+        const reqId = ++root._scorecardRequestId;
         root.selectedCricketMatch = matchData;
         root.cricketScorecard = null;
-        if (!matchData.league_id || !matchData.id) return;
+        if (!matchData.league_id || !matchData.id) {
+            root.isLoadingScorecard = false;
+            return;
+        }
         root.isLoadingScorecard = true;
+        scorecardProcess.activeRequestId = reqId;
         scorecardProcess.running = false;
         scorecardProcess.command = ["python3", root.scriptPath, "--scorecard", String(matchData.league_id), String(matchData.id)];
         scorecardProcess.running = true;
     }
 
     function closeCricketScorecard() {
+        root._scorecardRequestId += 1;
         scorecardProcess.running = false;
         root.isLoadingScorecard = false;
         root.selectedCricketMatch = null;
@@ -51,18 +58,26 @@ Singleton {
 
     Process {
         id: scorecardProcess
+        property int activeRequestId: 0
         running: false
         stdout: StdioCollector {
             onStreamFinished: {
+                if (scorecardProcess.activeRequestId !== root._scorecardRequestId)
+                    return;
                 root.isLoadingScorecard = false;
+                const raw = this.text.trim();
+                if (!raw)
+                    return;
                 try {
-                    root.cricketScorecard = JSON.parse(this.text.trim());
+                    root.cricketScorecard = JSON.parse(raw);
                 } catch (e) {
                     root.cricketScorecard = { innings: [], error: "Failed to parse scorecard" };
                 }
             }
         }
         onExited: {
+            if (scorecardProcess.activeRequestId !== root._scorecardRequestId)
+                return;
             if (root.isLoadingScorecard && !root.cricketScorecard) {
                 root.isLoadingScorecard = false;
             }
