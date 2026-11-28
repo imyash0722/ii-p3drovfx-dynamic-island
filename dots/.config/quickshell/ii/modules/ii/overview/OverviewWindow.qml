@@ -188,6 +188,40 @@ Item { // Window
         }
     }
 
+    property int previewRetryCount: 0
+    property bool previewRetryReset: false
+    readonly property bool needsPreviewRetry: root.visible && GlobalStates.overviewOpen
+        && Config.options.overview.showWindowPreviews && !!root.toplevel && !windowPreview.hasContent
+
+    onNeedsPreviewRetryChanged: {
+        if (!needsPreviewRetry) {
+            previewRetryTimer.stop();
+            if (windowPreview.hasContent || !GlobalStates.overviewOpen)
+                root.previewRetryCount = 0;
+        } else if (root.previewRetryCount < 5) {
+            previewRetryTimer.restart();
+        }
+    }
+
+    Timer {
+        id: previewRetryTimer
+        interval: 350
+        repeat: false
+        onTriggered: {
+            if (!root.needsPreviewRetry || root.previewRetryCount >= 5)
+                return;
+            root.previewRetryCount += 1;
+            root.previewRetryReset = true;
+            Qt.callLater(() => {
+                root.previewRetryReset = false;
+                if (root.visible && !windowPreview.live && root.toplevel && windowPreview.captureSource)
+                    windowPreview.captureFrame();
+                if (root.needsPreviewRetry && root.previewRetryCount < 5)
+                    previewRetryTimer.restart();
+            });
+        }
+    }
+
     Behavior on x {
         enabled: root.animate
         animation: OverviewStyle.motionEnter.numberAnimation.createObject(this)
@@ -337,7 +371,7 @@ Item { // Window
         ScreencopyView {
             id: windowPreview
             anchors.fill: parent
-            captureSource: (root.toplevel && Config.options.overview.showWindowPreviews) ? root.toplevel : null
+            captureSource: (!root.previewRetryReset && root.toplevel && Config.options.overview.showWindowPreviews) ? root.toplevel : null
             // Respect the configured capture mode. The transition layer uses the
             // same setting, so a live overview never silently becomes frozen just
             // because the background animation is active.

@@ -70,6 +70,7 @@ def fetch_cricket():
     for sport in data["sports"]:
         for league in sport.get("leagues", []):
             league_name = league.get("name", "")
+            league_id = str(league.get("id", ""))
             for ev in league.get("events", []):
                 ev_name = ev.get("name", "")
                 short_name = ev.get("shortName", "")
@@ -134,6 +135,7 @@ def fetch_cricket():
 
                 match_item = {
                     "id": ev.get("id", ""),
+                    "league_id": league_id,
                     "title": ev.get("title", ev.get("name", "")),
                     "short_name": ev.get("shortName", ""),
                     "league": league_name,
@@ -260,8 +262,170 @@ def fetch_tennis():
     }
 
 
+def get_f1_team_color(team_name, openf1_hex=""):
+    if openf1_hex and isinstance(openf1_hex, str):
+        hx = openf1_hex.strip().lstrip("#")
+        if len(hx) == 6:
+            return f"#{hx.upper()}"
+    t = (team_name or "").lower()
+    if "ferrari" in t:
+        return "#E80020"
+    if "mclaren" in t:
+        return "#FF8000"
+    if "mercedes" in t:
+        return "#27F4D2"
+    if "red bull" in t:
+        return "#3671C6"
+    if "racing bulls" in t or "rb f1" in t or t == "rb":
+        return "#6692FF"
+    if "aston martin" in t:
+        return "#229971"
+    if "alpine" in t:
+        return "#FF87BC"
+    if "williams" in t:
+        return "#64C4FF"
+    if "haas" in t:
+        return "#B6BABD"
+    if "audi" in t or "sauber" in t or "kick" in t:
+        return "#F50537"
+    if "cadillac" in t:
+        return "#909090"
+    return "#888888"
+
+
+def _format_f1_duration(val):
+    if val is None:
+        return ""
+    if isinstance(val, list):
+        # Qualifying returns [Q1, Q2, Q3]; pick the latest non-null time
+        valid = [v for v in val if isinstance(v, (int, float)) and v > 0]
+        if not valid:
+            return ""
+        val = valid[-1]
+    if not isinstance(val, (int, float)) or val <= 0:
+        return ""
+    mins = int(val // 60)
+    secs = val % 60
+    if mins > 0:
+        return f"{mins}:{secs:06.3f}"
+    return f"{secs:.3f}s"
+
+
+def _format_f1_gap(gap, is_leader=False, dnf=False, dns=False, dsq=False):
+    if dsq:
+        return "DSQ"
+    if dns:
+        return "DNS"
+    if dnf:
+        return "DNF"
+    if is_leader or gap == 0 or gap is None:
+        return "Leader"
+    if isinstance(gap, list):
+        valid = [g for g in gap if isinstance(g, (int, float))]
+        if not valid:
+            return ""
+        gap = valid[-1]
+    if isinstance(gap, (int, float)):
+        return f"+{gap:.3f}s"
+    return str(gap)
+
+
+def fetch_f1_latest_session():
+    # Primary: OpenF1 latest session (covers Practice, Sprint, Qualifying, Race)
+    sessions = fetch_json("https://api.openf1.org/v1/sessions?session_key=latest")
+    if isinstance(sessions, list) and sessions:
+        s = sessions[0]
+        session_name = s.get("session_name", "Session")
+        circuit = s.get("circuit_short_name", "")
+        country = s.get("country_name", "")
+        results_raw = fetch_json("https://api.openf1.org/v1/session_result?session_key=latest")
+        drivers_raw = fetch_json("https://api.openf1.org/v1/drivers?session_key=latest")
+
+        if isinstance(results_raw, list) and results_raw:
+            driver_map = {}
+            if isinstance(drivers_raw, list):
+                for d in drivers_raw:
+                    num = d.get("driver_number")
+                    if num is not None:
+                        driver_map[num] = d
+
+            sorted_res = sorted(
+                [r for r in results_raw if r.get("position") is not None],
+                key=lambda x: x.get("position", 999)
+            )
+
+            top_results = []
+            for r in sorted_res[:10]:
+                pos = r.get("position")
+                num = r.get("driver_number")
+                d_info = driver_map.get(num, {})
+                last_name = d_info.get("last_name") or d_info.get("broadcast_name") or f"#{num}"
+                first_name = d_info.get("first_name", "")
+                full_name = f"{first_name} {last_name}".strip() if first_name else last_name
+                short = d_info.get("name_acronym") or last_name[:3].upper()
+                team = d_info.get("team_name", "")
+                color = get_f1_team_color(team, d_info.get("team_colour", ""))
+                time_str = _format_f1_duration(r.get("duration"))
+                gap_str = _format_f1_gap(
+                    r.get("gap_to_leader"),
+                    is_leader=(pos == 1),
+                    dnf=bool(r.get("dnf")),
+                    dns=bool(r.get("dns")),
+                    dsq=bool(r.get("dsq"))
+                )
+                top_results.append({
+                    "pos": pos,
+                    "driver": full_name,
+                    "short": short,
+                    "team": team,
+                    "color": color,
+                    "time": time_str,
+                    "gap": time_str if pos == 1 and time_str else gap_str
+                })
+
+            if top_results:
+                return {
+                    "session_name": session_name,
+                    "event_name": f"{circuit}, {country}".strip(", "),
+                    "results": top_results
+                }
+
+    # Fallback: Jolpica / Ergast last race results
+    last_data = fetch_json("https://api.jolpi.ca/ergast/f1/current/last/results.json")
+    if last_data and "MRData" in last_data and "RaceTable" in last_data["MRData"]:
+        races = last_data["MRData"]["RaceTable"].get("Races", [])
+        if races:
+            r = races[0]
+            top_results = []
+            for res in r.get("Results", [])[:10]:
+                drv = res.get("Driver", {})
+                cons = res.get("Constructor", {})
+                pos = int(res.get("position", 0))
+                full_name = f"{drv.get('givenName', '')} {drv.get('familyName', '')}".strip()
+                team_name = cons.get("name", "")
+                time_obj = res.get("Time", {})
+                gap_str = time_obj.get("time", res.get("status", ""))
+                top_results.append({
+                    "pos": pos,
+                    "driver": full_name,
+                    "short": drv.get("code") or drv.get("familyName", "")[:3].upper(),
+                    "team": team_name,
+                    "color": get_f1_team_color(team_name),
+                    "time": gap_str,
+                    "gap": gap_str
+                })
+            if top_results:
+                return {
+                    "session_name": "Grand Prix",
+                    "event_name": r.get("raceName", "Last Race"),
+                    "results": top_results
+                }
+    return None
+
+
 # ================= FORMULA 1 =================
 def fetch_f1():
+    latest_session_info = fetch_f1_latest_session()
     # 1. Next Race
     next_url = "https://api.jolpi.ca/ergast/f1/current/next.json"
     next_data = fetch_json(next_url)
@@ -339,17 +503,14 @@ def fetch_f1():
                 pts = d.get("points", "0")
                 cons_name = d.get("Constructors", [{}])[0].get("name", "Team") if d.get("Constructors") else "Team"
 
-                is_fav = False
-                color = ""
-                for k, v in fav_drivers.items():
-                    if k in last_name.lower():
-                        is_fav = True
-                        color = v["color"]
-                        break
+                short_code = d_info.get("code") or last_name[:3].upper()
+                is_fav = any(k in last_name.lower() for k in fav_drivers)
+                color = get_f1_team_color(cons_name)
 
                 driver_standings.append({
                     "pos": pos,
                     "driver": full_name,
+                    "short": short_code,
                     "constructor": cons_name,
                     "points": pts,
                     "is_favorite": is_fav,
@@ -375,11 +536,7 @@ def fetch_f1():
                 pts = c.get("points", "0")
 
                 is_fav = any(ft in t_name.lower() for ft in fav_teams)
-                color = ""
-                for ft, clr in fav_teams.items():
-                    if ft in t_name.lower():
-                        color = clr
-                        break
+                color = get_f1_team_color(t_name)
 
                 constructor_standings.append({
                     "pos": pos,
@@ -390,6 +547,7 @@ def fetch_f1():
                 })
 
     return {
+        "latest_session": latest_session_info,
         "next_race": next_race_info,
         "driver_standings": driver_standings[:10],
         "constructor_standings": constructor_standings
@@ -433,11 +591,79 @@ def save_data(data):
     os.replace(temp_file, OUTPUT_FILE)
 
 
+def fetch_cricket_scorecard(league_id, event_id):
+    if not league_id or not event_id:
+        return {"innings": [], "error": "Missing match identifier"}
+
+    url = f"https://site.api.espn.com/apis/site/v2/sports/cricket/{league_id}/summary?event={event_id}"
+    data = fetch_json(url, timeout=10)
+    if not data:
+        return {"innings": [], "error": "Unable to load scorecard"}
+
+    innings_map = {}
+    innings_order = []
+
+    for mc in data.get("matchcards", []):
+        headline = (mc.get("headline") or "").strip()
+        if headline not in ("Batting", "Bowling"):
+            continue
+        inn_num = str(mc.get("inningsNumber") or "1")
+        if inn_num not in innings_map:
+            innings_map[inn_num] = {
+                "innings_number": inn_num,
+                "batting_team": "",
+                "bowling_team": "",
+                "runs": "",
+                "total": "",
+                "extras": "",
+                "batting": [],
+                "bowling": []
+            }
+            innings_order.append(inn_num)
+
+        entry = innings_map[inn_num]
+        if headline == "Batting":
+            entry["batting_team"] = mc.get("teamName", "")
+            entry["runs"] = mc.get("runs") or ""
+            entry["total"] = mc.get("total") or ""
+            entry["extras"] = mc.get("extras") or ""
+            for p in mc.get("playerDetails", []):
+                entry["batting"].append({
+                    "name": p.get("playerName", ""),
+                    "dismissal": p.get("dismissal", ""),
+                    "runs": str(p.get("runs", "0")),
+                    "balls": str(p.get("ballsFaced", "0")),
+                    "fours": str(p.get("fours", "0")),
+                    "sixes": str(p.get("sixes", "0"))
+                })
+        elif headline == "Bowling":
+            entry["bowling_team"] = mc.get("teamName", "")
+            for p in mc.get("playerDetails", []):
+                entry["bowling"].append({
+                    "name": p.get("playerName", ""),
+                    "overs": str(p.get("overs", "0")),
+                    "maidens": str(p.get("maidens", "0")),
+                    "runs": str(p.get("conceded", "0")),
+                    "wickets": str(p.get("wickets", "0")),
+                    "econ": str(p.get("economyRate", "0.00"))
+                })
+
+    return {
+        "innings": [innings_map[k] for k in innings_order]
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Quickshell Sports Aggregator")
     parser.add_argument("--once", action="store_true", help="Fetch once and exit")
     parser.add_argument("--daemon", action="store_true", help="Run background adaptive loop")
+    parser.add_argument("--scorecard", nargs=2, metavar=("LEAGUE_ID", "EVENT_ID"), help="Fetch cricket scorecard JSON to stdout")
     args = parser.parse_args()
+
+    if args.scorecard:
+        sc = fetch_cricket_scorecard(args.scorecard[0], args.scorecard[1])
+        print(json.dumps(sc, ensure_ascii=False))
+        return
 
     if args.once or not args.daemon:
         data = fetch_all()

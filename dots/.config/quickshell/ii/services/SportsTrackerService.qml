@@ -22,9 +22,52 @@ Singleton {
     property var tennisFavorites: []
     property var tennisRankings: []
     property var tennisMatches: []
+    property var f1LatestSession: null
     property var f1NextRace: null
     property var f1DriverStandings: []
     property var f1ConstructorStandings: []
+
+    property var selectedCricketMatch: null
+    property var cricketScorecard: null
+    property bool isLoadingScorecard: false
+
+    function openCricketScorecard(matchData) {
+        if (!matchData) return;
+        root.selectedCricketMatch = matchData;
+        root.cricketScorecard = null;
+        if (!matchData.league_id || !matchData.id) return;
+        root.isLoadingScorecard = true;
+        scorecardProcess.running = false;
+        scorecardProcess.command = ["python3", root.scriptPath, "--scorecard", String(matchData.league_id), String(matchData.id)];
+        scorecardProcess.running = true;
+    }
+
+    function closeCricketScorecard() {
+        scorecardProcess.running = false;
+        root.isLoadingScorecard = false;
+        root.selectedCricketMatch = null;
+        root.cricketScorecard = null;
+    }
+
+    Process {
+        id: scorecardProcess
+        running: false
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.isLoadingScorecard = false;
+                try {
+                    root.cricketScorecard = JSON.parse(this.text.trim());
+                } catch (e) {
+                    root.cricketScorecard = { innings: [], error: "Failed to parse scorecard" };
+                }
+            }
+        }
+        onExited: {
+            if (root.isLoadingScorecard && !root.cricketScorecard) {
+                root.isLoadingScorecard = false;
+            }
+        }
+    }
 
     function refresh() {
         if (root.isRefreshing) return;
@@ -65,6 +108,7 @@ Singleton {
                     root.tennisMatches = data.tennis.matches || [];
                 }
                 if (data.f1) {
+                    root.f1LatestSession = data.f1.latest_session || null;
                     root.f1NextRace = data.f1.next_race || null;
                     root.f1DriverStandings = data.f1.driver_standings || [];
                     root.f1ConstructorStandings = data.f1.constructor_standings || [];
