@@ -11,9 +11,16 @@ Item {
     id: root
 
     property string activeFilter: "all"
+    readonly property bool showingScorecard: SportsTrackerService.selectedCricketMatch !== null
+
+    CricketScorecardView {
+        anchors.fill: parent
+        visible: root.showingScorecard
+    }
 
     ColumnLayout {
         anchors.fill: parent
+        visible: !root.showingScorecard
         spacing: 12
 
         // Top Header
@@ -22,10 +29,10 @@ Item {
             spacing: 10
 
             Rectangle {
-                width: 36
-                height: 36
-                radius: Appearance.rounding.small
-                color: Appearance.colors.colLayer2
+                width: 38
+                height: 38
+                radius: Appearance.rounding.normal
+                color: Appearance.colors.colLayer1
                 border.width: 1
                 border.color: Appearance.colors.colOutlineVariant
 
@@ -33,7 +40,7 @@ Item {
                     anchors.centerIn: parent
                     text: "sports_and_outdoors"
                     iconSize: 20
-                    color: Appearance.colors.colPrimary
+                    color: Appearance.colors.colOnSurface
                 }
             }
 
@@ -50,15 +57,15 @@ Item {
 
                 StyledText {
                     text: SportsTrackerService.lastUpdated ? Translation.tr("Updated ") + SportsTrackerService.lastUpdated : Translation.tr("Live Tracker")
-                    font.pixelSize: Appearance.font.pixelSize.smallest
+                    font.pixelSize: Appearance.font.pixelSize.smaller
                     color: Appearance.colors.colOnSurfaceVariant
                 }
             }
 
             // Refresh Button
             RippleButton {
-                implicitWidth: 34
-                implicitHeight: 34
+                implicitWidth: 36
+                implicitHeight: 36
                 buttonRadius: Appearance.rounding.full
                 colBackground: Appearance.colors.colLayer1
                 colBackgroundHover: Appearance.colors.colLayer2
@@ -108,21 +115,21 @@ Item {
                     readonly property bool isSelected: root.activeFilter === modelData.id
 
                     Layout.fillWidth: true
-                    implicitHeight: 28
+                    implicitHeight: 32
                     buttonRadius: Appearance.rounding.full
-                    colBackground: isSelected ? Appearance.colors.colPrimary : Appearance.colors.colLayer1
-                    colBackgroundHover: isSelected ? Appearance.colors.colPrimary : Appearance.colors.colLayer2
+                    colBackground: isSelected ? Appearance.colors.colSecondaryContainer : Appearance.colors.colLayer1
+                    colBackgroundHover: isSelected ? Appearance.colors.colSecondaryContainerHover : Appearance.colors.colLayer2
                     borderWidth: 1
-                    borderColor: isSelected ? Appearance.colors.colPrimary : Appearance.colors.colOutlineVariant
+                    borderColor: isSelected ? Appearance.colors.colSecondaryContainer : Appearance.colors.colOutlineVariant
 
                     onPressed: root.activeFilter = modelData.id
 
                     StyledText {
                         anchors.centerIn: parent
                         text: modelData.label
-                        font.pixelSize: Appearance.font.pixelSize.smaller
-                        font.weight: parent.isSelected ? Font.Bold : Font.Normal
-                        color: parent.isSelected ? Appearance.colors.colOnPrimary : Appearance.colors.colOnSurface
+                        font.pixelSize: Appearance.font.pixelSize.small
+                        font.weight: parent.isSelected ? Font.DemiBold : Font.Normal
+                        color: parent.isSelected ? Appearance.colors.colOnSecondaryContainer : Appearance.colors.colOnSurfaceVariant
                     }
                 }
             }
@@ -143,13 +150,13 @@ Item {
             ColumnLayout {
                 id: contentCol
                 width: parent.width
-                spacing: 14
+                spacing: 16
 
                 // CRICKET SECTION
                 ColumnLayout {
                     visible: root.activeFilter === "all" || root.activeFilter === "cricket"
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 10
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -158,7 +165,7 @@ Item {
                         StyledText {
                             text: Translation.tr("Cricket")
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.Bold
+                            font.weight: Font.DemiBold
                             color: Appearance.colors.colOnSurface
                             Layout.fillWidth: true
                         }
@@ -182,9 +189,9 @@ Item {
                     Rectangle {
                         visible: SportsTrackerService.cricketMatches.length === 0
                         Layout.fillWidth: true
-                        implicitHeight: 60
+                        implicitHeight: 68
                         color: Appearance.colors.colLayer1
-                        radius: Appearance.rounding.normal
+                        radius: Appearance.rounding.large
                         border.width: 1
                         border.color: Appearance.colors.colOutlineVariant
 
@@ -201,12 +208,12 @@ Item {
                 ColumnLayout {
                     visible: root.activeFilter === "all" || root.activeFilter === "tennis"
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 10
 
                     StyledText {
                         text: Translation.tr("Tennis")
                         font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.Bold
+                        font.weight: Font.DemiBold
                         color: Appearance.colors.colOnSurface
                     }
 
@@ -219,12 +226,12 @@ Item {
                 ColumnLayout {
                     visible: root.activeFilter === "all" || root.activeFilter === "f1"
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 10
 
                     StyledText {
                         text: Translation.tr("Formula 1")
                         font.pixelSize: Appearance.font.pixelSize.normal
-                        font.weight: Font.Bold
+                        font.weight: Font.DemiBold
                         color: Appearance.colors.colOnSurface
                     }
 

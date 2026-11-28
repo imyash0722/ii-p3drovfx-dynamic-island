@@ -13,16 +13,16 @@ Rectangle {
     readonly property bool hasLiveMatch: matches.length > 0 && matches.some(m => m.is_live)
 
     color: Appearance.colors.colLayer1
-    radius: Appearance.rounding.normal
+    radius: Appearance.rounding.large
     border.width: 1
-    border.color: hasLiveMatch ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.4) : Appearance.colors.colOutlineVariant
-    implicitHeight: mainLayout.implicitHeight + 24
+    border.color: Appearance.colors.colOutlineVariant
+    implicitHeight: mainLayout.implicitHeight + 28
 
     ColumnLayout {
         id: mainLayout
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 10
+        anchors.margins: 14
+        spacing: 12
 
         // Header Row
         RowLayout {
@@ -34,8 +34,8 @@ Rectangle {
                 radius: Appearance.rounding.small
                 border.width: 1
                 border.color: Appearance.colors.colOutlineVariant
-                implicitWidth: tagText.implicitWidth + 12
-                implicitHeight: 22
+                implicitWidth: tagText.implicitWidth + 14
+                implicitHeight: 24
 
                 StyledText {
                     id: tagText
@@ -43,14 +43,15 @@ Rectangle {
                     text: "ATP TOUR"
                     font.pixelSize: Appearance.font.pixelSize.smaller
                     font.weight: Font.DemiBold
-                    color: Appearance.colors.colPrimary
+                    color: Appearance.colors.colOnSurface
                 }
             }
 
             StyledText {
                 Layout.fillWidth: true
-                text: Translation.tr("World Rankings & Live")
+                text: Translation.tr("Rankings & Live")
                 font.pixelSize: Appearance.font.pixelSize.small
+                font.weight: Font.Medium
                 color: Appearance.colors.colOnSurfaceVariant
                 elide: Text.ElideRight
             }
@@ -58,17 +59,17 @@ Rectangle {
             // Live indicator if match is active
             Rectangle {
                 visible: root.hasLiveMatch
-                color: Qt.rgba(0.9, 0.2, 0.2, 0.15)
+                color: Appearance.colors.colLayer2
                 radius: Appearance.rounding.full
                 border.width: 1
-                border.color: Qt.rgba(0.9, 0.2, 0.2, 0.5)
-                implicitWidth: liveTennisRow.implicitWidth + 10
-                implicitHeight: 20
+                border.color: Appearance.colors.colOutlineVariant
+                implicitWidth: liveTennisRow.implicitWidth + 14
+                implicitHeight: 22
 
                 RowLayout {
                     id: liveTennisRow
                     anchors.centerIn: parent
-                    spacing: 4
+                    spacing: 5
 
                     Rectangle {
                         width: 6
@@ -79,16 +80,16 @@ Rectangle {
                         SequentialAnimation on opacity {
                             running: root.hasLiveMatch
                             loops: Animation.Infinite
-                            NumberAnimation { from: 1.0; to: 0.2; duration: 800; easing.type: Easing.InOutQuad }
-                            NumberAnimation { from: 0.2; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+                            NumberAnimation { from: 1.0; to: 0.25; duration: 800; easing.type: Easing.InOutQuad }
+                            NumberAnimation { from: 0.25; to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
                         }
                     }
 
                     StyledText {
                         text: Translation.tr("LIVE")
-                        font.pixelSize: Appearance.font.pixelSize.smallest
+                        font.pixelSize: Appearance.font.pixelSize.smaller
                         font.weight: Font.Bold
-                        color: "#E53935"
+                        color: Appearance.colors.colOnSurface
                     }
                 }
             }
@@ -101,28 +102,28 @@ Rectangle {
                 required property var modelData
                 Layout.fillWidth: true
                 color: Appearance.colors.colLayer2
-                radius: Appearance.rounding.small
-                implicitHeight: matchCol.implicitHeight + 16
+                radius: Appearance.rounding.normal
+                implicitHeight: matchCol.implicitHeight + 24
 
                 ColumnLayout {
                     id: matchCol
                     anchors.fill: parent
-                    anchors.margins: 8
-                    spacing: 4
+                    anchors.margins: 12
+                    spacing: 6
 
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText {
-                            text: modelData.tournament + " • " + modelData.round
-                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            text: modelData.tournament + " · " + modelData.round
+                            font.pixelSize: Appearance.font.pixelSize.small
                             font.weight: Font.DemiBold
-                            color: Appearance.colors.colTertiary
+                            color: Appearance.colors.colOnSurfaceVariant
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                         }
                         StyledText {
                             text: modelData.status_desc || ""
-                            font.pixelSize: Appearance.font.pixelSize.smallest
+                            font.pixelSize: Appearance.font.pixelSize.smaller
                             color: Appearance.colors.colOnSurfaceVariant
                         }
                     }
@@ -131,16 +132,17 @@ Rectangle {
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText {
-                            text: "🎾 " + (modelData.player1.name || "")
+                            text: modelData.player1.name || ""
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: modelData.player1.is_favorite ? Font.Bold : Font.Normal
-                            color: modelData.player1.is_favorite ? Appearance.colors.colPrimary : Appearance.colors.colOnSurface
+                            font.weight: modelData.player1.is_favorite ? Font.DemiBold : Font.Normal
+                            color: Appearance.colors.colOnSurface
                             Layout.fillWidth: true
+                            elide: Text.ElideRight
                         }
                         StyledText {
                             text: (modelData.player1.sets || []).join("  ")
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.DemiBold
+                            font.weight: Font.Bold
                             color: Appearance.colors.colOnSurface
                         }
                     }
@@ -149,16 +151,17 @@ Rectangle {
                     RowLayout {
                         Layout.fillWidth: true
                         StyledText {
-                            text: "🎾 " + (modelData.player2.name || "")
+                            text: modelData.player2.name || ""
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: modelData.player2.is_favorite ? Font.Bold : Font.Normal
-                            color: modelData.player2.is_favorite ? Appearance.colors.colPrimary : Appearance.colors.colOnSurface
+                            font.weight: modelData.player2.is_favorite ? Font.DemiBold : Font.Normal
+                            color: Appearance.colors.colOnSurface
                             Layout.fillWidth: true
+                            elide: Text.ElideRight
                         }
                         StyledText {
                             text: (modelData.player2.sets || []).join("  ")
                             font.pixelSize: Appearance.font.pixelSize.normal
-                            font.weight: Font.DemiBold
+                            font.weight: Font.Bold
                             color: Appearance.colors.colOnSurface
                         }
                     }
@@ -166,10 +169,11 @@ Rectangle {
             }
         }
 
-        // Dedicated Favorite Player Cards (Jannik Sinner & Carlos Alcaraz)
+        // Favorite Player Cards
         RowLayout {
+            visible: root.favorites.length > 0
             Layout.fillWidth: true
-            spacing: 8
+            spacing: 10
 
             Repeater {
                 model: root.favorites
@@ -177,53 +181,56 @@ Rectangle {
                     required property var modelData
                     Layout.fillWidth: true
                     color: Appearance.colors.colLayer2
-                    radius: Appearance.rounding.small
-                    border.width: 1
-                    border.color: Appearance.colors.colOutlineVariant
-                    implicitHeight: favCol.implicitHeight + 16
+                    radius: Appearance.rounding.normal
+                    implicitHeight: favCol.implicitHeight + 24
 
                     ColumnLayout {
                         id: favCol
                         anchors.fill: parent
-                        anchors.margins: 8
-                        spacing: 4
+                        anchors.margins: 12
+                        spacing: 8
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 6
 
                             StyledText {
-                                text: modelData.flag || "🎾"
-                                font.pixelSize: Appearance.font.pixelSize.normal
-                            }
-
-                            StyledText {
                                 Layout.fillWidth: true
                                 text: modelData.name || ""
                                 font.pixelSize: Appearance.font.pixelSize.normal
-                                font.weight: Font.Bold
+                                font.weight: Font.DemiBold
                                 color: Appearance.colors.colOnSurface
                                 elide: Text.ElideRight
+                            }
+
+                            StyledText {
+                                visible: !!(modelData.country)
+                                text: modelData.country || ""
+                                font.pixelSize: Appearance.font.pixelSize.smaller
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnSurfaceVariant
                             }
                         }
 
                         RowLayout {
                             Layout.fillWidth: true
-                            spacing: 4
+                            spacing: 6
 
                             Rectangle {
-                                color: Appearance.colors.colPrimary
-                                radius: 4
-                                implicitWidth: rankBadgeText.implicitWidth + 8
-                                implicitHeight: 18
+                                color: Appearance.colors.colLayer1
+                                radius: Appearance.rounding.small
+                                border.width: 1
+                                border.color: Appearance.colors.colOutlineVariant
+                                implicitWidth: rankBadgeText.implicitWidth + 12
+                                implicitHeight: 22
 
                                 StyledText {
                                     id: rankBadgeText
                                     anchors.centerIn: parent
                                     text: "#" + modelData.rank
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.weight: Font.Bold
-                                    color: Appearance.colors.colOnPrimary
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    font.weight: Font.DemiBold
+                                    color: Appearance.colors.colOnSurface
                                 }
                             }
 
@@ -231,8 +238,8 @@ Rectangle {
                                 Layout.fillWidth: true
                                 text: modelData.points + " pts"
                                 font.pixelSize: Appearance.font.pixelSize.small
-                                font.weight: Font.DemiBold
-                                color: Appearance.colors.colTertiary
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnSurfaceVariant
                                 horizontalAlignment: Text.AlignRight
                             }
                         }
@@ -241,57 +248,61 @@ Rectangle {
             }
         }
 
-        // Top 5 ATP Rankings Ribbon
+        // Top 5 ATP Rankings
         Rectangle {
+            visible: root.rankings.length > 0
             Layout.fillWidth: true
             color: Appearance.colors.colLayer2
-            radius: Appearance.rounding.small
-            implicitHeight: top5Col.implicitHeight + 14
+            radius: Appearance.rounding.normal
+            implicitHeight: top5Col.implicitHeight + 24
 
             ColumnLayout {
                 id: top5Col
                 anchors.fill: parent
-                anchors.margins: 8
-                spacing: 6
+                anchors.margins: 12
+                spacing: 8
 
                 StyledText {
                     text: Translation.tr("Top 5 Standings")
-                    font.pixelSize: Appearance.font.pixelSize.smaller
+                    font.pixelSize: Appearance.font.pixelSize.small
                     font.weight: Font.DemiBold
                     color: Appearance.colors.colOnSurfaceVariant
                 }
 
-                RowLayout {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 6
 
                     Repeater {
                         model: root.rankings
-                        delegate: Rectangle {
+                        delegate: RowLayout {
                             required property var modelData
+                            required property int index
                             Layout.fillWidth: true
-                            color: modelData.is_favorite ? Qt.rgba(Appearance.colors.colPrimary.r, Appearance.colors.colPrimary.g, Appearance.colors.colPrimary.b, 0.15) : "transparent"
-                            radius: 4
-                            implicitHeight: 22
+                            spacing: 8
 
-                            RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 3
+                            StyledText {
+                                text: "#" + modelData.rank
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.DemiBold
+                                color: index === 0 ? Appearance.colors.colOnSurface : Appearance.colors.colOnSurfaceVariant
+                                Layout.preferredWidth: 26
+                            }
 
-                                StyledText {
-                                    text: "#" + modelData.rank
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.weight: Font.Bold
-                                    color: modelData.is_favorite ? Appearance.colors.colPrimary : Appearance.colors.colOnSurfaceVariant
-                                }
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: modelData.name || ""
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: index === 0 ? Font.DemiBold : Font.Normal
+                                color: Appearance.colors.colOnSurface
+                                elide: Text.ElideRight
+                            }
 
-                                StyledText {
-                                    text: (modelData.name || "").split(" ").pop()
-                                    font.pixelSize: Appearance.font.pixelSize.smallest
-                                    font.weight: modelData.is_favorite ? Font.Bold : Font.Normal
-                                    color: modelData.is_favorite ? Appearance.colors.colPrimary : Appearance.colors.colOnSurface
-                                    elide: Text.ElideRight
-                                }
+                            StyledText {
+                                text: modelData.points + " pts"
+                                font.pixelSize: Appearance.font.pixelSize.small
+                                font.weight: Font.Medium
+                                color: Appearance.colors.colOnSurfaceVariant
                             }
                         }
                     }
